@@ -35,12 +35,15 @@ function composeObj(matchI18nContent, propName = 'i18n') {
                 stack.pop()
             }
         }
-        console.log('element :>> ', element)
         // 使用 大括号的完整性，来截取 i18n 对象
         // 此处展示不支持 扩展符号 ...
         if (element.replace(/\s/g, '').match(/^\.\.\.[^:.]+/)) {
-            console.log('...对象:>> ', element)
-            i18nArr[i18nArr.length - 1] = i18nArr[i18nArr.length - 1].replace(/,/g, '')
+            // console.log('...对象:>> ', element)
+            // 处理 逗号
+            // 若删除的 扩展符号对象处在属性最后一行，则上一行需要删除 逗号
+            if (element.replace(/\s/g, '').slice(-1) !== ',') {
+                i18nArr[i18nArr.length - 1] = i18nArr[i18nArr.length - 1].replace(/,/g, '')
+            }
         } else {
             i18nArr.push(element)
         }
