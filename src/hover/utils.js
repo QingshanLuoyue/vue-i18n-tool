@@ -7,21 +7,24 @@ const fs = require('fs')
 //     zh: { },
 //     en: {}
 // }
-function composeObj(matchI18nContent, propName = 'i18n', prevKeyMatch = 'export const i18n') {
+function composeObj(matchI18nContent, propName = 'i18n') {
     let inMap = ['{']
     let outMap = ['}']
     let stack = []
     let i18nObjectArr = []
     let i18nArr = []
 
+    // 截取定义该对象之后（包含自己）的字符串
+    let reg = new RegExp(`(export)?(const|let)${propName}=`, 'g')
     matchI18nContent = matchI18nContent.split('\n')
     for (let i = 0; i < matchI18nContent.length; i++) {
-        const element = matchI18nContent[i]
-        if (element.indexOf(prevKeyMatch) > -1) {
+        const matchResult = matchI18nContent[i].replace(/\s/g, '').match(reg)
+        if (matchResult) {
             i18nObjectArr = matchI18nContent.slice(i)
             break
         }
     }
+    // 根据 大括号 配对的原则，得到 整个对象字符串
     for (let i = 0; i < i18nObjectArr.length; i++) {
         const element = i18nObjectArr[i]
         for (const word of element) {
@@ -32,8 +35,15 @@ function composeObj(matchI18nContent, propName = 'i18n', prevKeyMatch = 'export 
                 stack.pop()
             }
         }
+        console.log('element :>> ', element)
         // 使用 大括号的完整性，来截取 i18n 对象
-        i18nArr.push(element)
+        // 此处展示不支持 扩展符号 ...
+        if (element.replace(/\s/g, '').match(/^\.\.\.[^:.]+/)) {
+            console.log('...对象:>> ', element)
+            i18nArr[i18nArr.length - 1] = i18nArr[i18nArr.length - 1].replace(/,/g, '')
+        } else {
+            i18nArr.push(element)
+        }
         if (stack.length === 0) {
             // 去掉最后一个逗号，如果有的话
             i18nArr[i18nArr.length - 1] = i18nArr[i18nArr.length - 1].replace(/,/, '')
@@ -48,7 +58,7 @@ function composeObj(matchI18nContent, propName = 'i18n', prevKeyMatch = 'export 
     let final = i18nArr
         .join('')
         .replace(/\s/g, '')
-        .replace(new RegExp(`export(const|let)${propName}=`), '')
+        .replace(reg, '')
         .replace(/('|`)/g, '"')
         .replace(/(\w+):/g, (w, w2) => {
             // w2 是括号匹配的内容
