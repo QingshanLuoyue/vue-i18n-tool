@@ -1,4 +1,67 @@
 const path = require('path')
+const fs = require('fs')
+
+// 组装对象
+// 传入的数组：
+// export const| let propName = {
+//     zh: { },
+//     en: {}
+// }
+function composeObj(matchI18nContent, propName = 'i18n', prevKeyMatch = 'export const i18n') {
+    let inMap = ['{']
+    let outMap = ['}']
+    let stack = []
+    let i18nObjectArr = []
+    let i18nArr = []
+
+    matchI18nContent = matchI18nContent.split('\n')
+    for (let i = 0; i < matchI18nContent.length; i++) {
+        const element = matchI18nContent[i]
+        if (element.indexOf(prevKeyMatch) > -1) {
+            i18nObjectArr = matchI18nContent.slice(i)
+            break
+        }
+    }
+    for (let i = 0; i < i18nObjectArr.length; i++) {
+        const element = i18nObjectArr[i]
+        for (const word of element) {
+            if (inMap.includes(word)) {
+                stack.push(word)
+            }
+            if (outMap.includes(word)) {
+                stack.pop()
+            }
+        }
+        // 使用 大括号的完整性，来截取 i18n 对象
+        i18nArr.push(element)
+        if (stack.length === 0) {
+            // 去掉最后一个逗号，如果有的话
+            i18nArr[i18nArr.length - 1] = i18nArr[i18nArr.length - 1].replace(/,/, '')
+            break
+        }
+    }
+    // 1. 合并数组
+    // 2. 去掉空格
+    // 3. 去掉 export(const|let)${propName}= 字符串
+    // 4. 转换 单引号|反引号 为 双引号
+    // 5. 将对象的 key 用 双引号 包起来
+    let final = i18nArr
+        .join('')
+        .replace(/\s/g, '')
+        .replace(new RegExp(`export(const|let)${propName}=`), '')
+        .replace(/('|`)/g, '"')
+        .replace(/(\w+):/g, (w, w2) => {
+            // w2 是括号匹配的内容
+            return `"${w2}":`
+        })
+    // console.log('before:JSON.parse:字符串:>> ', final)
+    if (final) {
+        let parseObj = JSON.parse(final)
+        // console.log('JSON.parse:处理后对象:>> ', parseObj)
+        return parseObj
+    }
+}
+
 // 处理内部组件定义 i18n 对象
 // export default {
 //     prop: {
@@ -125,9 +188,13 @@ exports.resolveImportI18nPath = function (str, workDir) {
     })
     // 返回 from 后面的 路径
     let i18nImportUrl = i18nImportline.replace(/(\s|')/g, '').split('from')[1]
-    let absoluteImportUrl = path.resolve(workDir, i18nImportUrl)
+    let absoluteImportUrl = path.resolve(workDir, `${i18nImportUrl}.js`)
     console.log('absoluteImportUrl :>> ', absoluteImportUrl)
-    return absoluteImportUrl
+
+    let i18nContent = fs.readFileSync(absoluteImportUrl, { encoding: 'utf8' })
+    let i18nObject = composeObj(i18nContent)
+    console.log('i18nObject :>> ', i18nObject)
+    return i18nObject
 }
 
 // 计算项目根目录，最大向上查询 15 层级

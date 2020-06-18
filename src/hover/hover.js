@@ -14,7 +14,7 @@ const { resolveI18nObject, resolveImportI18nPath, getRootDir } = require('./util
 function provideHover(document, position, token) {
     const fileName = document.fileName // 文件路径
     const workDir = path.dirname(fileName) // 文件父级目录
-    const range = document.getWordRangeAtPosition(position, /\$t\(\'.+\'\)/) || [{ line: 0, character: 0 }] // 鼠标悬停范围
+    const range = document.getWordRangeAtPosition(position, /\$t\(\'[^).]+\'\)/) || [{ line: 0, character: 0 }] // 鼠标悬停范围
     const word = document.getText(range) // 通过鼠标悬停范围，截取单词
     console.log('document:>> ', document)
     console.log('word:>> ', word)
