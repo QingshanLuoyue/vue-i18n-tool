@@ -1,3 +1,4 @@
+const path = require('path')
 // 处理内部组件定义 i18n 对象
 // export default {
 //     prop: {
@@ -14,6 +15,7 @@
 // }
 exports.resolveI18nObject = function (str) {
     if (!str) {
+        console.log('resolveI18nObject:str 为空:>> ')
         return
     }
     let splitArr = str.split('\n')
@@ -75,7 +77,7 @@ exports.resolveI18nObject = function (str) {
         .join('')
         .replace(/\s/g, '')
         .replace(/i18n:/, '')
-        .replace(/'/g, '"')
+        .replace(/('|`)/g, '"')
         .slice(0, -1)
         .replace(/(\w+):/g, (w, w2) => {
             // w2 是括号匹配的内容
@@ -98,8 +100,9 @@ exports.resolveI18nObject = function (str) {
 //     },
 //     i18n,
 // }
-exports.resolveImportI18nPath = function (str) {
+exports.resolveImportI18nPath = function (str, workDir) {
     if (!str) {
+        console.log('resolveImportI18nPath:str 为空:>> ')
         return
     }
     let splitArr = str.split('\n')
@@ -121,7 +124,26 @@ exports.resolveImportI18nPath = function (str) {
         }
     })
     // 返回 from 后面的 路径
-    i18nImportline = i18nImportline.replace(/\s/g, '').split('from')[1]
-    console.log('i18nImportline :>> ', i18nImportline)
-    return i18nImportline
+    let i18nImportUrl = i18nImportline.replace(/(\s|')/g, '').split('from')[1]
+    let absoluteImportUrl = path.resolve(workDir, i18nImportUrl)
+    console.log('absoluteImportUrl :>> ', absoluteImportUrl)
+    return absoluteImportUrl
+}
+
+// 计算项目根目录，最大向上查询 15 层级
+exports.getRootDir = function (fileDir, whilteList = []) {
+    let projectRootDir = fileDir
+    let flag = false
+    for (let i = 0; i < 15; i++) {
+        whilteList.forEach((projectName) => {
+            if (projectRootDir.split('\\').pop() === projectName) {
+                flag = true
+            }
+        })
+        if (flag) {
+            break
+        }
+        projectRootDir = path.dirname(projectRootDir)
+    }
+    return projectRootDir
 }
