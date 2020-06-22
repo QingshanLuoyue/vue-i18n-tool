@@ -2,7 +2,7 @@ const vscode = require('vscode')
 const path = require('path')
 const fs = require('fs')
 
-const { resolveI18nObject, resolveImportI18nPath, getRootDir } = require('./utils')
+const { resolveI18nObject, resolveImportI18nPath, getRootDir, generateObj } = require('./utils')
 
 /**
  * 鼠标悬停提示，当鼠标停在package.json的dependencies或者devDependencies时，
@@ -38,11 +38,14 @@ function provideHover(document, position, token) {
         let finalObj = {}
         let i18nObject = ''
         let i18nPath = ''
-        if ((i18nObject = resolveI18nObject(content))) {
-            finalObj = i18nObject
-        } else if ((i18nPath = resolveImportI18nPath(content, workDir))) {
-            finalObj = i18nPath
-        }
+        let onlyDefault = true
+        let x = generateObj(content, onlyDefault)
+        console.log('x :>> ', x);
+        // if ((i18nObject = resolveI18nObject(content))) {
+        //     finalObj = i18nObject
+        // } else if ((i18nPath = resolveImportI18nPath(content, workDir))) {
+        //     finalObj = i18nPath
+        // }
         let w = word.match(/\$t\('(.+)'\)/)[1]
         console.log('项目根目录:>> ', projectDir, '\n\n')
         return new vscode.Hover(`${finalObj.zhCHS[w]}`)
