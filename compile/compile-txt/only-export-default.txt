@@ -1,0 +1,1268 @@
+export default {
+    props: {
+        nfcInfo: {
+            type: Object,
+            default: () => {}
+        },
+        // 子组件共享数据
+        componentShareData: {
+            type: Object,
+            default: () => {}
+        }
+    },
+    i18n,
+    mixins: [
+        require('../../mixins/mix-router.js').default,
+        personalMixins,
+        uploadMix
+    ],
+    components: {
+        [Icon.name]: Icon,
+        [Button.name]: Button,
+        [Popup.name]: Popup,
+        [DatetimePicker.name]: DatetimePicker,
+        [Picker.name]: Picker,
+        [Dialog.name]: Dialog,
+        uploadCertification,
+        yxDateTimePicker,
+        example
+    },
+    computed: {
+        ...mapGetters(['nfcRecognitionInfo']),
+        userId() {
+            return this.$store.getters.user.userId
+        },
+        isYouxinAndroid() {
+            return this.$store.getters.isYouxinAndroid
+        },
+        /**判断用户走的上一步的哪个流程
+         * 1 -> 大陆身份证
+         * 2 -> 香港居民身份证
+         * 3 -> 护照
+         * 4 -> 香港永久居民身份证
+         *
+         * cardType：1 内地身份证 2：护照
+         */
+        disabled() {
+            if (
+                this.identifyType === IDENTIFY_TYPE.HONGKONG_ID_CARD &&
+                this.paramsCode.extIdentifyType
+            ) {
+                return this.disableAction[
+                    `2${this.paramsCode.extIdentifyType}`
+                ]()
+            }
+            if ([3, 4, 5, 6, 7].includes(this.identifyType)) {
+                return this.disableAction[this.identifyType]()
+            }
+            return true
+        },
+        ocrType() {
+            return [2, 4, 6, 7].includes(this.identifyType)
+        },
+        isIdentifyImgRedColor() {
+            return (
+                !this.TWMCUpload &&
+                !this.form.identifyImg &&
+                this.FormdataError.identifyImg
+            )
+        },
+        //有正反面的身份证的补充证件
+        uploadEximg() {
+            return (
+                (!this.form.extIdCardFront || !this.form.extIdCardBack) &&
+                this.paramsCode.extIdentifyType === 1
+            )
+        },
+        //护照的补充证件
+        uploadExPassPortimg() {
+            return (
+                !this.form.extPassportImg &&
+                this.paramsCode.extIdentifyType === 3
+            )
+        },
+        isRejectContactAdress() {
+            return this.isReject && !this.form.contactAddress
+        },
+        isproofOfAddress() {
+            return this.isReject && !this.form.proofOfAddress
+        },
+        // 台湾澳门身份证主证件上传
+        TWMCUpload() {
+            return [6].includes(this.identifyType)
+        },
+        footerBtnText() {
+            return this.is16CountryNFC && this.informationShow
+                ? this.$t('nextFaceRecognition')
+                : this.$t('continue')
+        }
+    },
+    watch: {
+        form: {
+            handler(val) {
+                val &&
+                    Object.keys(val).forEach(item => {
+                        if (val[item]) {
+                            this.FormdataError[item] = false
+                        }
+                    })
+                this.isYouxinAndroid &&
+                    this.$LS.put('hk_personal_form' + this.userId, val, 1 / 24)
+            },
+            deep: true
+        },
+        paramsCode: {
+            handler(val) {
+                // console.log('paramsCode', val)
+                this.isYouxinAndroid &&
+                    this.$LS.put(
+                        'hk_personal_paramsCode' + this.userId,
+                        val,
+                        1 / 24
+                    )
+            },
+            deep: true
+        },
+        // 监听签发地
+        'paramsCode.placeOfIssue'(newV, oldV) {
+            console.log('watch placeOfIssue:>>> newV:', newV, ', oldV:', oldV)
+            console.log('this.isInitLoad', this.isInitLoad)
+
+            // 异常场景例子：
+            // 如果 从 其他页面跳回 personal， placeOfIssue 相等，不触发此 watch，需要手动设置 isInitLoad 为 false
+            // 如果 从 其他页面跳回 personal， placeOfIssue 不相等，会自动触发此 watch，isInitLoad 一开始为 true，阻止跳转护照页，之后自动设置 isInitLoad 为 false
+            if (this.isInitLoad) {
+                this.isInitLoad = false
+                return
+            }
+
+            // is16CountryNFC 为 false，不走nfc流程
+            if (!this.is16CountryNFC) return
+
+            console.log('\n personal>>> jump to passport')
+
+            this.jumpToPassport()
+        }
+    },
+    data() {
+        return {
+            IDENTIFY_TYPE,
+            // isInitLoad: true, // 是否是页面初次加载
+            currentDataCardFront: '',
+            currentDataCardBack: '',
+            identifyImg: '',
+            // 当前上传的图片标识
+            // currentUploadedFlag: '',
+            idcardOcrdata: '',
+            informationShow: false,
+            uploadTimes: 0,
+            identifyTypeMap: {
+                2: this.$t('hongKong'),
+                4: this.$t('hongKongPermanent'),
+                6: this.$t('taiWang'),
+                7: this.$t('aoMeng')
+            },
+            isInitLoad: true, // 是否是页面初次加载
+            addressError: '',
+            errorForm: [],
+            HKIdentifyInfo: {},
+            emails: [
+                '@gmail.com',
+                '@yahoo.com',
+                '@hotmail.com',
+                '@aol.com',
+                '@163.com',
+                '@qq.com',
+                '@126.com',
+                '@139.com'
+            ],
+            emailFocus: false,
+            emailError: false,
+            isRouterJump: false, // 是否是经过浏览器记录跳转的，或者物理按键返回的操作，非页面手动点击触发
+            // 是否是从nfc页面跳转过来的，此字段不能判断是否是从nfc识别出了数据
+            // isFromNfc: false,
+            disableAction: {
+                21: () => {
+                    // 补充身份证
+                    let params = [
+                        this.form.identifyImg,
+                        this.form.extIdCardFront,
+                        this.form.extIdCardBack,
+                        this.form.extIdentifyType
+                    ]
+                    return (
+                        params.some(item => !item) || this.checkCommonParams()
+                    )
+                },
+                23: () => {
+                    // 护照
+                    let params = [
+                        this.form.extPassportImg,
+                        this.form.identifyImg,
+                        this.form.extIdentifyType
+                    ]
+                    return (
+                        params.some(item => !item) || this.checkCommonParams()
+                    )
+                },
+                // 护照
+                3: () => {
+                    let params = [this.form.identifyEnd, this.form.identifyImg]
+                    return (
+                        params.some(item => !item) || this.checkCommonParams()
+                    )
+                },
+                // 香港永久居民身份证
+                4: () => {
+                    return !this.form.identifyImg || this.checkCommonParams()
+                },
+                // 台湾身份证校验项
+                6: () => {
+                    let params = [
+                        this.form.identifyCardFront,
+                        this.form.identifyCardBack
+                    ]
+                    return (
+                        params.some(item => !item) || this.checkCommonParams()
+                    )
+                },
+                // 澳门身份证校验项
+                7: () => {
+                    // let params = [
+                    //     this.form.identifyCardFront,
+                    //     this.form.identifyCardBack
+                    // ]
+                    // return (
+                    //     params.some(item => !item) || this.checkCommonParams()
+                    // )
+                    return !this.form.identifyImg || this.checkCommonParams()
+                }
+            },
+            // 其他的出生地国家，当选择其他的时候，填入
+            otherBirthLocationName: '',
+            // 其他的国家地区，当选择其他的时候，填入
+            otherCountryName: '',
+            // 证件类型,测试用，要改成‘’
+            identifyType: '',
+            numberFieldText: this.$t('idPassportNo'),
+            uploadBtnText: this.$t('clickUploadIdCard'),
+            is16CountryNFC: false, // 是否是16国开户
+            // 护照或身份证
+            flowTextName: '',
+            showEmailConfirm: false,
+            showBirthLocation: false,
+            showCountryDetail: false,
+            pickerTitle: this.$t('pleaseSelect'),
+            // 当前是哪个picker
+            type: '',
+            codeToValue: {
+                gender: {
+                    0: this.$t('male'),
+                    1: this.$t('female')
+                },
+                country: this.countryList().codeTextMap,
+                extIdentifyType: {
+                    1: this.$t('chinaIdCard'),
+                    3: this.$t('passportInfo')
+                },
+                placeOfIssue: this.countryList().codeTextMap
+            },
+            columns: {
+                // 签发地
+                placeOfIssue: this.countryList().countryMap,
+                gender: [
+                    { text: this.$t('male'), code: 0 },
+                    { text: this.$t('female'), code: 1 }
+                ],
+                country: this.countryList().countryMap,
+                placeOfBirth: this.countryList().countryMap,
+                // 补充证件类型
+                extIdentifyType: [
+                    { text: this.$t('chinaIdCard'), code: 1 },
+                    { text: this.$t('passportInfo'), code: 3 }
+                ]
+            },
+            // 存储code
+            paramsCode: {
+                // 签发地code
+                placeOfIssue: '',
+                // 性别
+                gender: '',
+                // 国家地区code
+                country: '',
+                // 出生地code
+                placeOfBirth: '',
+                // 补充证件类型
+                extIdentifyType: ''
+            },
+            form: {
+                // 签发地
+                placeOfIssue: '',
+                identifyImg: null,
+                identifyCode: '',
+                realName: '',
+                lastName: '',
+                firstName: '',
+                birthday: '',
+                gender: '',
+                extIdentifyType: '',
+                extIdCardFront: '',
+                extIdCardBack: '',
+                extPassportImg: '',
+                country: '',
+                placeOfBirth: '',
+                email: '',
+                contactAddress: '',
+                proofOfAddress: '',
+                // 澳门，台湾正反面
+                identifyCardFront: null,
+                identifyCardBack: null,
+                // 护照截止时间
+                identifyEnd: ''
+            },
+            // 校验表单标红
+            FormdataError: {
+                // 签发地
+                placeOfIssue: false,
+                identifyImg: false,
+                identifyCode: false,
+                realName: false,
+                lastName: false,
+                firstName: false,
+                birthday: false,
+                gender: false,
+                extIdentifyType: false,
+                extIdCardFront: false,
+                extIdCardBack: false,
+                extPassportImg: false,
+                country: false,
+                placeOfBirth: false,
+                email: false,
+                contactAddress: false,
+                proofOfAddress: false,
+                // 澳门，台湾正反面
+                identifyCardFront: false,
+                identifyCardBack: false,
+                // 护照截止时间
+                identifyEnd: false
+            },
+            title: {
+                gender: this.$t('selectGender'),
+                countryName: this.$t('selectCountry'),
+                birthLocation: this.$t('selectPlaceOfBir'),
+                placeOfIssue: this.$t('pleaseSelectplace')
+            },
+            // 是否是开户驳回状态
+            isReject: false,
+            // 接口返回的base64的护照头像，用于16国NFC驳回时的，用于app活体识别
+            passportHeadImg: '',
+            buryPointParams: {
+                page: '',
+                id: '',
+                name: '',
+                UpdateIDresult: ''
+            },
+            exampleImage: `${window.location.origin}/webapp/open-account-hk/apply/example.png`
+        }
+    },
+    /**
+     * 1 -> 大陆身份证
+     * 2 -> 香港身份证
+     * 3 -> 护照
+     * 4 -> 香港永久居民身份证
+     * 6 -> 台湾身份证，除了主证件是2张，其他的更香港永久居民身份证一致
+     * 7 -> 澳门身份证，除了主证件是2张，其他的更香港永久居民身份证一致
+     */
+    created() {
+        this.init()
+    },
+    methods: {
+        // 上传双张图片时，保存图片数据
+        saveDoubleImgsData(imgFrontData, imgBackData) {
+            // 合并数据
+            if (imgBackData && imgFrontData) {
+                Object.keys(this.idcardOcrdata).forEach(key => {
+                    this.idcardOcrdata[key] =
+                        imgBackData[key] || imgFrontData[key]
+                })
+            }
+        },
+        errorFormValidate(val) {
+            if (!this.form[val]) {
+                this.FormdataError[val] = true
+            } else {
+                this.FormdataError[val] = false
+            }
+        },
+        async uploadImg(val) {
+            try {
+                this.$loading(`${this.$t('ocrloading')}`)
+                // 如果是历史数据，则清除缓存
+                let isfront = this.form.identifyCardBack !== val
+                let params = {
+                    idCardPath: val,
+                    idCardType: this.identifyType,
+                    front: isfront
+                }
+                //在点击重新上传时，正反面都有时，为防止填写信息被覆盖，暂存识别信息
+                this.idcardOcrdata = await idcardOcrIdentify(params)
+                // 保存图片
+                let Imgs = {
+                    identifyCardFront: this.form.identifyCardFront,
+                    identifyCardBack: this.form.identifyCardBack,
+                    identifyImg: this.form.identifyImg
+                }
+                if (this.form.identifyCardFront === val) {
+                    this.currentDataCardFront =
+                        this.idcardOcrdata && deepCopy(this.idcardOcrdata)
+                }
+                if (this.form.identifyCardBack === val) {
+                    this.currentDataCardBack =
+                        this.idcardOcrdata && deepCopy(this.idcardOcrdata)
+                }
+                this.saveDoubleImgsData(
+                    this.currentDataCardFront,
+                    this.currentDataCardBack
+                )
+
+                let info = {
+                    ...this.idcardOcrdata,
+                    ...Imgs
+                }
+
+                if (this.is16CountryNFC) {
+                    info.birthTimeInEnLang = ''
+                    info.identifyEndEnLang = ''
+                    if (this.$i18n.lang === 'en') {
+                        // 后端返回格式为 YYYY-MM-DD，需要转换成 YYYY年MM月DD日 格式
+                        // info.birthday info.identifyEnd
+                        info.birthTimeInEnLang =
+                            info.birthday &&
+                            info.birthday.replace(
+                                /(\d+)-(\d+)-(\d+)/,
+                                '$1年$2月$3日'
+                            )
+
+                        info.identifyEndEnLang =
+                            info.identifyEnd &&
+                            info.identifyEnd.replace(
+                                /(\d+)-(\d+)-(\d+)/,
+                                '$1年$2月$3日'
+                            )
+                    } else {
+                        // 转换格式 YYYY-MM-DD 为 YYYY年MM月DD日
+                        info.birthday =
+                            info.birthday &&
+                            info.birthday.replace(
+                                /(\d+)-(\d+)-(\d+)/,
+                                '$1年$2月$3日'
+                            )
+                        info.identifyEnd =
+                            info.identifyEnd &&
+                            info.identifyEnd.replace(
+                                /(\d+)-(\d+)-(\d+)/,
+                                '$1年$2月$3日'
+                            )
+                    }
+
+                    this.jumpToPassport(info)
+                    return
+                }
+                if (this.idcardOcrdata) {
+                    // true 代表是否是ORC识别的
+                    this.handleBackData(info, true)
+                }
+                this.informationShow = true
+            } catch (e) {
+                if (e.code === 102132) {
+                    this.uploadTimes++
+                } else {
+                    this.$alert({
+                        message: `${e.msg || this.$t('theNetwork')}`,
+                        confirmButtonText: this.$t('okToSure')
+                    })
+                    this.informationShow = false
+                    this.clearData(true) //其它特殊情况
+                }
+                // 若上传失败次数大于3次,用户填写信息界面放开
+                if (this.uploadTimes >= 3) {
+                    this.$alert({
+                        message: this.$t('tooMany'),
+                        confirmButtonText: this.$t('okToSure')
+                    })
+                    this.clearData(false) //false表示保留图片，不清空
+                    this.informationShow = true
+                } else {
+                    try {
+                        await this.$confirm({
+                            message: `${e.msg || this.$t('theNetwork')}`,
+                            cancelButtonText: this.$t('uploadAgain'),
+                            confirmButtonText: this.$t('fillInManually')
+                        })
+                            .then(() => {
+                                //用户选择手动输入，图片不清空
+                                this.clearData(false) //false保留图片
+                                this.informationShow = true
+                            })
+                            .catch(() => {
+                                //true重新上传，清空图片
+                                this.clearData(true)
+                                this.informationShow = false
+                            })
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            } finally {
+                this.$close()
+            }
+        },
+        // 清空数据
+        clearData(flag) {
+            //保存图片，flag为true时清空图片，为false时不清空图片
+            let identifyImg = this.form.identifyImg
+            let identifyCardFront = this.form.identifyCardFront
+            let identifyCardBack = this.form.identifyCardBack
+            this.paramsCode = this.$options.data.call(this).paramsCode
+            this.form = this.$options.data.call(this).form
+            // 此处不会触发watch,vue只检测一个变量最后一次改变
+            if (!flag) {
+                this.form.identifyImg = identifyImg
+                this.form.identifyCardFront = identifyCardFront
+                this.form.identifyCardBack = identifyCardBack
+            }
+        },
+        async init() {
+            try {
+                this.$loading()
+
+                // this.$i18n.setLang('en')
+                // 兼容安卓崩溃问题的处理方法，兼容安卓崩溃问题，如果是填写页面的时候，发生崩溃，需要从缓存中获取
+                console.log('step1 : init')
+                let stringData = JSON.parse(
+                    JSON.stringify(this.componentShareData)
+                )
+                // if (stringData.isFromNfc) {
+                //     console.log('step2 :')
+                //     this.isFromNfc = stringData.isFromNfc
+                //     delete stringData.isFromNfc
+                // }
+
+                // this.initDataFromLs()
+                // 获取当前开户信息，如果是驳回的话，地址证明需要上传
+                let {
+                    openAccountStatus,
+                    identifyType,
+                    openAccountType
+                } = await getHKOpenAccountInfo()
+                this.$LS.put('personal_identifyType', identifyType)
+                // 根据身份证类型，显示提示文案
+                if ([2, 4, 6, 7].includes(identifyType)) {
+                    this.flowTextName = this.$t('IDCard')
+                    this.numberFieldText = this.$t('idPassportNo')
+                    this.uploadBtnText = this.$t('clickUploadIdCard')
+                } else {
+                    this.flowTextName = this.$t('passportInfo')
+                    this.numberFieldText = this.$t('passportNumberInfo')
+                    this.uploadBtnText = this.$t('clickToUploadPass')
+                }
+
+                let { isFromNfc, passportHeadImg } = stringData
+                if (isFromNfc && passportHeadImg) {
+                    // 是从nfc 识别到数据 则为true
+                    this.is16CountryNFC = true
+                } else {
+                    if (
+                        ![
+                            IDENTIFY_TYPE.HONGKONG_ID_CARD,
+                            IDENTIFY_TYPE.HONGKONG_PERMANENT_ID_CARD
+                        ].includes(identifyType)
+                    ) {
+                        // 是否来自 判断持有香港银行账户页面
+                        // let haveHkBankAccount = +this.$route.query.haveHkBankAccount
+                        let { haveHkBankAccount } = await getHkBankAccountInfo()
+                        if (haveHkBankAccount) {
+                            this.is16CountryNFC = false
+                        } else if (!haveHkBankAccount) {
+                            this.is16CountryNFC = true
+                        }
+                    }
+                }
+                console.log('is16CountryNFC :>> ', this.is16CountryNFC)
+                // if (+this.$route.query.haveHkBankAccount !== 0)
+                openAccountStatus === 6
+                    ? (this.isReject = true)
+                    : (this.isReject = false)
+
+                // 信息回显
+                let data = await getHKIdentifyInfo()
+
+                if (this.isYouxinAndroid) {
+                    console.log('redisplay local form paramsCode')
+                    data = {
+                        ...this.$LS.get('hk_personal_form' + this.userId),
+                        ...this.$LS.get('hk_personal_paramsCode' + this.userId),
+                        ...data
+                    }
+                }
+
+                let idcardOcrdata = this.$route.query.idcardOcrdata
+                console.log('idcardOcrdata :>> ', idcardOcrdata)
+                if (idcardOcrdata) {
+                    data = {
+                        ...data,
+                        ...idcardOcrdata
+                    }
+                }
+
+                // 如果有数据从 NFC 过来，或者其他优先级数据，需要合并进行回显
+                console.log('step2 :')
+                if (isFromNfc) {
+                    console.log('step3 : merge nfc data')
+                    data = {
+                        ...data,
+                        ...stringData
+                    }
+                }
+                console.log('data :', data)
+
+                //初始化页面时，如果已经上传了图片，再次进入时展示信息填写页
+                if (
+                    (data.identifyCardFront && data.identifyCardBack) ||
+                    data.identifyImg
+                ) {
+                    // 若已存在护照图片，但是不存在nfc识别的护照信息，则需要跳转护照页，重走 nfc
+                    // if (this.is16CountryNFC && !data.passportHeadImg) {
+                    if (
+                        this.is16CountryNFC &&
+                        +this.$route.query.fromJudgeBankPage === 1
+                    ) {
+                        // 特殊处理出生日期，注意OCR识别返回的日期格式为2020-5-20
+                        this.resolveEnDataChange(
+                            data,
+                            'birthTimeInEnLang',
+                            'birthday'
+                        )
+                        // 特殊处理证件有效期
+                        this.resolveEnDataChange(
+                            data,
+                            'identifyEndEnLang',
+                            'identifyEnd'
+                        )
+                        let param = {
+                            // 子组件间切换共享数据
+                            ...data,
+                            birthday: this.form.birthday,
+                            birthTimeInEnLang: this.birthTimeInEnLang,
+                            identifyEnd: this.form.identifyEnd,
+                            identifyEndEnLang: this.identifyEndEnLang,
+                            passportHeadImg: this.passportHeadImg // 用来判断是否已经历过一次nfc
+                        }
+                        this.jumpToPassport(param)
+                        return
+                    }
+                    this.informationShow = true
+                }
+                this.identifyType = data.identifyType
+                // CA 失败走永久香港身份流程
+                if (identifyType === 1 && openAccountType === 2) {
+                    this.identifyType = IDENTIFY_TYPE.HONGKONG_PERMANENT_ID_CARD
+                }
+
+                if (data.placeOfIssueCode === this.paramsCode.placeOfIssue) {
+                    // 如果 从 其他页面跳回 personal， placeOfIssueCode === '',
+                    // 和 paramsCode.placeOfIssue 相等，不触发 watch，需要手动设置 isInitLoad 为 false
+                    this.isInitLoad = false
+                }
+                console.log('step4 :')
+                this.handleBackData(data)
+                // 只执行一次
+                this.handleBackImgData()
+                this.HKIdentifyInfo = data
+            } catch (e) {
+                console.log(e)
+                await this.$toast(e.msg || this.$t('theNetwork'))
+            } finally {
+                this.$close()
+            }
+        },
+        handleBackImgData() {
+            //若此时该账户被驳回，不调用OCR接口
+            if (this.isReject) {
+                this.informationShow = true
+                return
+            }
+            // 单张
+            this.$watch('form.identifyImg', function(newV) {
+                if (newV) {
+                    this.uploadImg(newV)
+                }
+            })
+            this.$watch('form.identifyCardFront', function(newV) {
+                if (newV) {
+                    // 上传正面
+                    this.uploadImg(newV)
+                }
+            })
+            this.$watch('form.identifyCardBack', function(newV) {
+                if (newV) {
+                    // 上传背面
+                    this.uploadImg(newV)
+                }
+            })
+        },
+        selectEmailHandler(item) {
+            this.form.email &&
+                this.$set(
+                    this.form,
+                    'email',
+                    this.form.email.split('@')[0] + item
+                )
+            this.emailBlurHandler()
+        },
+        emailInputHandler() {
+            if (this.form.email && this.form.email.indexOf('@') < 0) {
+                this.emailFocus = true
+                this.emailError = false
+            } else if (!this.form.email) {
+                this.emailFocus = false
+                this.emailError = false
+            }
+        },
+        // emailFocusHandler() {
+        //     if (!/(ipad)|(iphone)/i.test(navigator.userAgent)) {
+        //         setTimeout(() => {
+        //             this.$refs.emailTips.scrollIntoView()
+        //         }, 300)
+        //     }
+        // },
+        emailBlurHandler() {
+            setTimeout(() => {
+                if (!this.$reg.email(this.form.email)) {
+                    this.emailError = true
+                } else {
+                    this.emailError = false
+                }
+                this.emailFocus = false
+            }, 300)
+        },
+        // 提交，校验公共参数
+        checkCommonParams() {
+            let {
+                identifyCode,
+                lastName,
+                firstName,
+                birthday,
+                gender,
+                country,
+                placeOfBirth,
+                email,
+                contactAddress,
+                proofOfAddress
+            } = this.form
+            let params = [
+                identifyCode,
+                lastName,
+                firstName,
+                birthday,
+                gender,
+                country,
+                placeOfBirth,
+                email
+            ]
+            // 驳回之后，必传通讯地址和地址证明图片
+            if (this.isReject) {
+                params = [...params, contactAddress, proofOfAddress]
+            }
+            return params.some(item => !item)
+        },
+        // 识别NFC，进行活体识别
+        async appFaceHandler() {
+            this.$loading()
+            try {
+                //  "1：大陆流程,2：港版流程,3：机构流程
+                //  "0：表示无源比对,1：表示有源比对"
+                let { token } = await getFaceIdLitToken2({
+                    openAccountType: 2,
+                    comparisonType: 0
+                })
+                console.log(
+                    'image_ref2',
+                    this.passportHeadImg &&
+                        this.passportHeadImg.substring(0, 100)
+                )
+                let image_ref1 = ''
+                if (this.componentShareData.passportHeadImg) {
+                    image_ref1 = this.componentShareData.passportHeadImg
+                } else {
+                    console.log('走了这里')
+                    image_ref1 = this.passportHeadImg
+                }
+                this.$close()
+                let params = {
+                    image_ref1,
+                    biz_token: token
+                }
+                // 进行无源对比
+                let data = await this.$jsBridge.callApp(
+                    'get_passive_meglive_data',
+                    params
+                )
+                this.$loading()
+                console.log('活体识别出的数据，get_passive_meglive_data', data)
+                let {
+                    sign,
+                    sign_version: signVersion,
+                    biz_token: bizToken,
+                    meglive_data: megliveData
+                } = data
+                await this.$accountService.getFaceIdVerifyResultV4({
+                    bizToken,
+                    megliveData,
+                    sign,
+                    signVersion,
+                    openAccountType: 2,
+                    comparisonType: 0
+                })
+            } catch (e) {
+                console.log('活体报错', e)
+                if (e && e.msg) await this.$toast(e.msg)
+                if (e && typeof e.desc === 'string') {
+                    await this.$toast(e.desc)
+                }
+                if (e && typeof e.desc === 'object') {
+                    // 调用app方法错误，才走这边
+                    console.log('走了这里')
+                    await this.$toast(
+                        this.$t('appFaceErrorMessage') || e.desc.errorMessage
+                    )
+                }
+                throw e
+            } finally {
+                this.$close()
+            }
+        },
+        removeLs() {
+            this.$LS.remove('hk_personal_form' + this.userId)
+            this.$LS.remove('hk_personal_paramsCode' + this.userId)
+        },
+        handleBackData(data, isOCR = false) {
+            this.passportHeadImg = data.passportHeadImg || null
+            // 回显获取code类型的值
+            this.paramsCode.extIdentifyType =
+                this.paramsCode.extIdentifyType || data.extIdentifyType || ''
+            this.paramsCode.gender = this.paramsCode.gender || data.gender
+            this.paramsCode.country =
+                this.paramsCode.country || data.countryCode
+            this.paramsCode.placeOfBirth =
+                this.paramsCode.placeOfBirth || data.placeOfBirthCode
+            this.paramsCode.placeOfIssue =
+                this.paramsCode.placeOfIssue || data.placeOfIssueCode
+            // 回显香港身份证的补充证件类型
+            if (this.identifyType === IDENTIFY_TYPE.HONGKONG_ID_CARD) {
+                // code转义补充证件类型
+                this.form.extIdentifyType =
+                    this.form.extIdentifyType ||
+                    this.codeToValue.extIdentifyType[data.extIdentifyType]
+            }
+            this.form.identifyCode = this.form.identifyCode || data.identifyCode
+            this.form.lastName = this.form.lastName || data.lastName
+            this.form.firstName = this.form.firstName || data.firstName
+            // 特殊处理出生日期，注意OCR识别返回的日期格式为2020-5-20
+            this.resolveEnDataChange(
+                data,
+                'birthTimeInEnLang',
+                'birthday',
+                isOCR
+            )
+            this.form.gender =
+                this.form.gender || this.codeToValue.gender[data.gender]
+            if (this.identifyType === IDENTIFY_TYPE.PASSPORT) {
+                // 签发地信息
+                this.form.placeOfIssue =
+                    this.form.placeOfIssue ||
+                    this.countryList().codeTextMap[data.placeOfIssueCode]
+            }
+            // 国家地区
+            this.form.country =
+                this.form.country ||
+                this.handleOtherLocationfromBack(
+                    data.countryCode,
+                    data.country,
+                    'country'
+                )
+            // 出生地
+            this.form.placeOfBirth =
+                this.form.placeOfBirth ||
+                this.handleOtherLocationfromBack(
+                    data.placeOfBirthCode,
+                    data.placeOfBirth,
+                    'placeOfBirth'
+                )
+            // 护照签发地
+            this.form.email = this.form.email || data.email
+            this.form.realName = this.form.realName || data.realName
+            this.form.contactAddress =
+                this.form.contactAddress || data.contactAddress
+            this.form.identifyImg = data.identifyImg
+            this.form.extIdCardFront =
+                this.form.extIdCardFront || data.extIdCardFront
+            this.form.extIdCardBack =
+                this.form.extIdCardBack || data.extIdCardBack
+            this.form.extPassportImg =
+                this.form.extPassportImg || data.extPassportImg
+            this.form.proofOfAddress =
+                this.form.proofOfAddress || data.proofOfAddress
+            // 特殊处理证件有效期
+            this.resolveEnDataChange(
+                data,
+                'identifyEndEnLang',
+                'identifyEnd',
+                isOCR
+            )
+            // 澳门台湾身份证回显
+            this.form.identifyCardFront = data.identifyCardFront
+            this.form.identifyCardBack = data.identifyCardBack
+        },
+        // 处理英文情况下，数据展示与转换
+        resolveEnDataChange(data, propToSubmit, propToDisplay, isOCR) {
+            //英文下， propToDisplay 用来展示，显示为：例如： 2019 JAN 12nd｜ 1993 JAN 01st, propToSubmit 用来传给后台，格式：1990年01月01日
+            // 后台返回的格式统一为： 1990年01月01日，传给后台统一为：1990年01月01日， 多语言-英文需要做相应的转化
+            if (this.$i18n.lang === 'en') {
+                // 如果 data.propToSubmit 有值，说明是从 nfc 过来的
+                // 此时 data.propToDisplay 已经是经过转换的 英文格式日期
+                // 此时 data.propToSubmit 才是我们需要传给后端的中文格式日期
+                if (data[propToSubmit]) {
+                    this.form[propToDisplay] =
+                        this.form[propToDisplay] || data[propToDisplay]
+                    this[propToSubmit] = data[propToSubmit]
+                } else {
+                    // 由1990年01月01日转换为来1990 JAN 01st显示
+                    let dataStr = ''
+                    if (!isOCR) {
+                        dataStr =
+                            data[propToDisplay] &&
+                            data[propToDisplay].replace(
+                                /(\d+)年(\d+)月(\d+)日/,
+                                '$1-$2-$3'
+                            )
+                    } else {
+                        // OCR 识别的已经是 YYYY-MM-dd 格式了
+                        dataStr = data[propToDisplay]
+                    }
+                    this.form[propToDisplay] =
+                        this.form[propToDisplay] ||
+                        (data[propToDisplay] && formatDateToEn(dataStr))
+                    // 1990年01月01日, propToSubmit用来传给后台
+                    this[propToSubmit] = data[propToDisplay]
+                }
+            } else {
+                if (isOCR) {
+                    this.form[propToDisplay] =
+                        this.form[propToDisplay] ||
+                        (data[propToDisplay] &&
+                            data[propToDisplay].replace(
+                                /(\d+)-(\d+)-(\d+)/,
+                                '$1年$2月$3日'
+                            ))
+                } else {
+                    this.form[propToDisplay] =
+                        this.form[propToDisplay] || data[propToDisplay]
+                }
+            }
+        },
+        handleOtherLocationfromBack(code, name, flag) {
+            if (code === 99999 && flag === 'country') {
+                this.showCountryDetail = true
+                this.otherCountryName = name
+            }
+            if (code === 99999 && flag === 'placeOfBirth') {
+                this.showBirthLocation = true
+                this.otherBirthLocationName = name
+            }
+            return this.codeToValue.country[code]
+        },
+        async nextStepHandle() {
+            try {
+                this.$loading()
+                // 进行活体识别
+                let passportHeadImg = null
+                if (this.componentShareData.passportHeadImg) {
+                    passportHeadImg = await this.uploadFileBybase64(
+                        `data:image/jpeg;base64,${this.componentShareData.passportHeadImg}`
+                    )
+                }
+
+                let {
+                    country: countryCode,
+                    placeOfBirth: placeOfBirthCode,
+                    gender: genderCode,
+                    extIdentifyType
+                } = this.paramsCode
+
+                let params = {
+                    birthday:
+                        this.$i18n.lang === 'en'
+                            ? this.birthTimeInEnLang
+                            : this.form.birthday,
+                    contactAddress: this.form.contactAddress,
+                    country: this.handleOtherLocation(
+                        this.form.country,
+                        countryCode,
+                        'country'
+                    ),
+                    countryCode,
+                    email: this.form.email,
+                    // 补充证件类型
+                    extIdentifyType: extIdentifyType,
+                    gender: genderCode,
+                    identifyCode: this.form.identifyCode,
+                    placeOfBirth: this.handleOtherLocation(
+                        this.form.placeOfBirth,
+                        placeOfBirthCode,
+                        'placeOfBirth'
+                    ),
+                    placeOfBirthCode,
+                    realName: this.form.realName,
+                    lastName: this.form.lastName,
+                    firstName: this.form.firstName,
+                    // 补充证件正面
+                    extIdCardFront: this.form.extIdCardFront,
+                    // 补充证件反面
+                    extIdCardBack: this.form.extIdCardBack,
+                    // 主证件图片
+                    identifyImg: this.form.identifyImg,
+                    extPassportImg: this.form.extPassportImg,
+                    passportHeadImg,
+                    identifyEnd:
+                        this.$i18n.lang === 'en'
+                            ? this.identifyEndEnLang
+                            : this.form.identifyEnd,
+                    is16CountryNFC: this.is16CountryNFC,
+                    proofOfAddress: this.form.proofOfAddress,
+                    identifyCardFront: this.form.identifyCardFront,
+                    identifyCardBack: this.form.identifyCardBack,
+                    placeOfIssueCode: '',
+                    placeOfIssue: ''
+                }
+                // 开户证件是护照
+                if (this.identifyType === IDENTIFY_TYPE.PASSPORT) {
+                    // 签发地信息
+                    let placeOfIssueCode = this.paramsCode.placeOfIssue
+                    params = {
+                        ...params,
+                        ...{
+                            placeOfIssue: this.form.placeOfIssue,
+                            placeOfIssueCode
+                        }
+                    }
+                }
+
+                await addHkIdentifyInfo(params)
+
+                // 作用：提交资料之后需要重新获取开户状态，用来重置 step 步骤
+                // 原因：因为用户可能走正常香港银行账户流程，进行到第三步（财务背景）
+                // 后面返回选择银行地区界面，修改成 nfc 流程，这时候进行提交资料
+                // 如果这时候我们先提交资料，那么用户资料改成nfc流程，但是启动活体识别后，用户手动关闭
+                // 最后，用户通过点击上面的 step 栏，跳转到第三步，就导致没有活体识别成功,进行了下一步
+                // 结果：重新获取开户状态，拿到 infoEditStatus 用来重置上面的 step 栏，这样就不能通过点击上面的 step 栏跳转到第三步了
+                this.$emit('updateStep')
+
+                // 只有16国开户才走活体识别
+                if (this.is16CountryNFC) {
+                    await this.appFaceHandler()
+                }
+
+                this.showEmailConfirm = false
+                // 开户信息埋点
+                try {
+                    if (compareVersion(appVersion, '3.4.0') >= 0) {
+                        openAccountAppsflyer({
+                            event_name: 'Second Step - Documents Upload',
+                            params: {
+                                userName: this.$store.state.user.userName,
+                                userId: this.$store.state.user.userId,
+                                email: this.form.email,
+                                realName: this.form.realName,
+                                lastName: this.form.lastName,
+                                firstName: this.form.firstName
+                            }
+                        })
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+                // asset-status
+                this.goNextStep()
+            } catch (e) {
+                if (e.desc) {
+                    return
+                }
+                this.$toast(e.msg || this.$t('theNetwork'))
+            } finally {
+                setTimeout(() => {
+                    this.$close()
+                }, 1500)
+            }
+        },
+        handleOtherLocation(name, code, flag) {
+            if (code === 99999 && flag === 'country') {
+                return this.otherCountryName
+            }
+            if (code === 99999 && flag === 'placeOfBirth') {
+                return this.otherBirthLocationName
+            }
+            return name
+        },
+        cancelEmail() {
+            this.showEmailConfirm = false
+        },
+        isUploadImgValidate() {
+            //未上传图片，点击下一步时标红
+            if (!this.form.identifyCardBack) {
+                this.FormdataError['identifyCardBack'] = true
+            }
+            if (!this.form.identifyCardFront) {
+                this.FormdataError['identifyCardFront'] = true
+            }
+            if (!this.form.identifyImg) {
+                this.FormdataError['identifyImg'] = true
+            }
+        },
+        async submitHandle() {
+            this.isUploadImgValidate()
+            //未展示填写框时，点击下一步失效
+            if (!this.informationShow) return
+            // 点击继续时输入框未填写时的校验步骤
+            Object.keys(this.form).map(item => {
+                if (!this.form[item]) {
+                    this.FormdataError[item] = true
+                } else {
+                    this.FormdataError[item] = false
+                }
+            })
+            let val = this.checkParams()
+            if (!val || this.disabled) {
+                return false
+            }
+            try {
+                let data = await verifyHkIdCodeStatus({
+                    identifyCode: this.form.identifyCode
+                })
+                // data true: 开过户， false: 没有开户
+                data
+                    ? this.$alert({
+                          message: `<span>${this.$t(
+                              'hadOpenAccount'
+                          )}<span><br><span>${this.$t(
+                              'connectCustonmer'
+                          )}</span>`,
+                          confirmButtonText: this.$t('okToSure'),
+                          className: 'opened-account'
+                      })
+                    : (this.showEmailConfirm = true)
+            } catch (e) {
+                this.$toast(e.msg || this.$t('theNetwork'))
+            }
+        },
+        checkParams() {
+            let { email } = this.form
+            if (!this.$reg.email(email)) {
+                // 已有标红提示，不需要弹框
+                // this.$alert(this.$t('emailFormatter'))
+                return false
+            }
+            if (this.handleTimeLength() < 18) {
+                this.$alert(this.$t('sorryEgeTip'))
+                return false
+            }
+            return true
+        },
+        // 跳转到 护照页，修改护照信息
+        jumpToPassport(params) {
+            this.$emit('changeView', {
+                componentName: 'passport',
+                componentShareData: {
+                    // 子组件间切换共享数据
+                    identifyImg: this.form.identifyImg, // 护照图片地址
+                    placeOfIssue: this.form.placeOfIssue, //签发地
+                    placeOfIssueCode: this.paramsCode.placeOfIssue, //签发地 code
+                    identifyCode: this.form.identifyCode, // 证件号码
+                    birthday: this.form.birthday, // 出生日期
+                    birthTimeInEnLang: this.birthTimeInEnLang, // 英文情况下，需要提交给后台的出生日期，而不是this.form.birthday。格式 1990年1月1日
+                    identifyEnd: this.form.identifyEnd, // 证件有效期
+                    identifyEndEnLang: this.identifyEndEnLang, // 英文情况下，需要提交给后台的证件有效期，而不是this.form.identifyEnd。 格式 1990年1月1日
+                    passportHeadImg: this.passportHeadImg, // 用来判断是否已经历过一次nfc
+                    ...params
+                }
+            })
+        },
+        // 计算年龄
+        handleTimeLength() {
+            let val =
+                this.$i18n.lang === 'en'
+                    ? this.birthTimeInEnLang
+                    : this.form.birthday
+
+            return dayjs(new Date()).diff(dayjs(val), 'year')
+        },
+        // TODO 埋点相关，切勿与业务逻辑耦合
+        //上传埋点
+        //type 身份证还是地址
+        //cardType 临时还是永久，大陆正反面，护照
+        //getPar 是否执行埋点方法标识
+        buryPointClick(type, cardType, getPar) {
+            if (type === 'id') {
+                this.buryPointParams.page = 'openIDhk2'
+                if (this.identifyType === 2) {
+                    this.buryPointParams.id = 'hktemid'
+                    this.buryPointParams.name = this.$t('uploadHK')
+                    if (cardType === 'front') {
+                        this.buryPointParams.id = 'cnID'
+                        this.buryPointParams.name = this.$t('uploadID')
+                    } else if (cardType === 'back') {
+                        this.buryPointParams.id = 'backcnID'
+                        this.buryPointParams.name = this.$t('uploadReverse')
+                    } else if (cardType === 'passport') {
+                        this.buryPointParams.id = 'passport'
+                        this.buryPointParams.name = this.$t(
+                            'uploadYourPassport'
+                        )
+                    }
+                } else if (this.identifyType === 4) {
+                    console.log(this.identifyType, '执行埋点方法标识')
+                    this.buryPointParams.id = 'hkid'
+                    this.buryPointParams.name = this.$t('uploadHongKongIDCard')
+                } else {
+                    this.buryPointParams.id = 'passport'
+                    this.buryPointParams.name = this.$t('uploadYourPassport')
+                }
+            } else if (type === 'address') {
+                this.buryPointParams.page = 'openinfohk3'
+                this.buryPointParams.id = 'address'
+                this.buryPointParams.name = this.$t('uploadaddress')
+            }
+            if (!getPar) {
+                webViewClick(
+                    this.buryPointParams.page,
+                    this.buryPointParams.id,
+                    this.buryPointParams.name
+                )
+            }
+        },
+        //上传状态埋点
+        buryPointStatus(status, type, cardType) {
+            this.buryPointParams.UpdateIDresult = status[0]
+            if (type === 'id') {
+                this.buryPointClick(type, cardType, true)
+                uploadId(
+                    this.buryPointParams.id,
+                    this.buryPointParams.name,
+                    this.buryPointParams.UpdateIDresult
+                )
+            } else if (type === 'address') {
+                hkAddressUpload(this.buryPointParams.UpdateIDresult)
+            }
+        }
+    }
+}

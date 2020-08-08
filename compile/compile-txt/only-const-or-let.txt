@@ -1,0 +1,80 @@
+
+const { onlyConstOrLet0, only1, only2 } = createNamespacedHelpers()
+const {
+    // oewi
+    onlyConstOrLet0,
+    only1, 
+    only2 
+} = createNamespacedHelpers()
+
+const { onlyConstOrLet1 } = createNamespacedHelpers('apply') // sdf
+
+const { onlyConstOrLet5 } = require('./only/const.js')
+
+const  onlyConstOrLet2  = createNamespacedHelpers('apply')
+
+const  onlyConstOrLet2  = createNamespacedHelpers(callback)
+
+const onlyConstOrLet21 = createNamespacedHelpers()
+
+const  onlyConstOrLet6 = require('./only/const.js')
+
+const onlyConstOrLet3 = {
+    a: 1,
+    b: 2,
+    c: 3
+}
+
+const onlyConstOrLet4 = {
+    [Popup.name]: Popup,
+    b: 2,
+    c: 3
+}
+
+const onlyConstOrLet7 = function(){}
+
+const onlyConstOrLet8 = function(uu, yy){}
+
+const onlyConstOrLet9 = function(){
+    console.log(1)
+}
+
+const onlyConstOrLet10 = () => {
+    
+}
+
+const onlyConstOrLet11 = {
+    [dialog.name]: dialog,
+    h: {
+        [btn.name]: btn,
+        p1: 1,
+        p2: [require('./mixin.js), i18n, 1],
+        p3: i18n,
+        x: {
+            u: [1]
+        },
+        p4: function(){console.log(1)},
+        p5: ()=> {console.log(2)}
+    },
+    b: {
+        x: {
+            u: [1]
+        },
+        y: {
+            i: 3
+        },
+        z: [require('./mixin.js)]
+    },
+    c: [require('./mixin.js), i18n, {a: 1}],
+    d: function() {},
+    e: () => {
+
+    },
+    g() {
+
+    },
+    f: other,
+    sameVar
+}
+
+const onlyConstOrLet12 = { [form.name]: form, b: 2, c: 3 }

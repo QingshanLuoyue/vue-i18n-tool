@@ -1,0 +1,26 @@
+
+import { Icon, Button, Popup, DatetimePicker, Picker, Dialog } from 'vant'
+
+import { createNamespacedHelpers } from 'vuex'
+
+import uploadMix from '@/biz-components/upload/upload-file.js'
+
+import yxDateTimePicker from '@/biz-components/yx-datetime-picker'
+
+import dayjs from 'dayjs'
+
+import {
+    addHkIdentifyInfo,
+    getHKIdentifyInfo,
+    getHKOpenAccountInfo,
+    verifyHkIdCodeStatus
+} from '@/service/user-account-server-hk.js'
+
+import {
+    // 获取港版开户银行账户资料
+    getHkBankAccountInfo
+} from '@/service/user-account-server'
+
+import { formatDateToEn, compareVersion, deepCopy } from '@/utils/tools'
+
+import { i18n } from './mixins/i18n'

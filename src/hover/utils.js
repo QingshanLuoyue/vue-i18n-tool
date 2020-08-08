@@ -255,10 +255,10 @@ exports.generateObj = function(jsContent, startIndex = 0, endIndex = jsContent.l
             if (matchResult = codeLine.match(exportReg)) {
                 exportName = matchResult[4] && matchResult[4].trim()
                 handleName = 'export'
-                console.log('exportReg:Result:>> ')
+                console.log('exportReg:Result:>> ', matchResult)
             } else if (matchResult = codeLine.match(exportDefaultReg)) {
                 handleName = 'exportDefault'
-                console.log('exportDefaultReg:Result:>> ')
+                console.log('exportDefaultReg:Result:>> ', matchResult)
             }
             // else if (matchResult = codeLine.match(functionReg)) {
             //     handleName = 'function'
@@ -339,10 +339,14 @@ function stringToObj(string, exportReg) {
             // w2 是括号匹配的内容
             return `"${w2}":`
         })
-    // console.log('before:JSON.parse:字符串:>> ', objstr)
-    let parsedObj = JSON.parse(objstr)
-    // console.log('JSON.parse:处理后对象:>> ', parsedObj)
-    return parsedObj
+    console.log('before:JSON.parse:字符串:>> ', objstr)
+    try {
+        let parsedObj = JSON.parse(objstr)
+        // console.log('JSON.parse:处理后对象:>> ', parsedObj)
+        return parsedObj
+    } catch (e) {
+        console.log('stringToObj:e:>> ', e)
+    }
 }
 /**
  * 解析 string 返回一个 export default 对象
