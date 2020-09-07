@@ -5,7 +5,8 @@
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.46.0"
-	},
+    },
+    "publisher": "linjunfu",
 	"categories": [
 		"Other"
 	],
