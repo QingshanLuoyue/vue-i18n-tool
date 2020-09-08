@@ -1,6 +1,6 @@
 // const fs = require('fs')
 // const path = require('path')
-// let babelParse = require('@babel/parser')
+let babelParse = require('@babel/parser')
 // 遍历 AST
 let traverse  = require('@babel/traverse').default
 // 使用 AST 成功 原始 code
@@ -11,18 +11,45 @@ let babel = require("@babel/core");
 
 // 处理逻辑
 
-exports.getI18n = function(scriptContent, key) {
+const getI18n = function(scriptContent, key = '') {
     let val = '', keys = key.split('.')
     // 1、读取原始 code
     // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin.js'), { encoding: 'utf8'})
+    // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin-decorate.js'), { encoding: 'utf8'})
     // let { objectProperty_commonJson } = require('./template/index.js')
     let objectProperty = require('./parserModel/objectProperty.js')
     // 2、转换原始 code， 得到 AST
+    babelParse
+    // let result = babelParse.parse(originJs, {
     let result = babel.transform(scriptContent, {
+    // let result = babel.transform(originJs, {
         ast: true,
-        // presets: [
-        //     转换成 ES5
-        //     require("@babel/preset-env")
+        filename: 'file.ts',
+        presets: [
+            // 转换成 ES5
+            require("@babel/preset-env"),
+            require("@babel/preset-typescript"),
+        ],
+        plugins: [
+            [
+                require("@babel/plugin-proposal-decorators"),
+                {
+                    decoratorsBeforeExport: true,
+                    // legacy: true
+                }
+            ],
+            [
+                require("@babel/plugin-proposal-class-properties"),
+                // { loose : true }
+            ],
+        ]
+
+        // babelParse配置
+        // sourceType: "module",
+        // plugins: [
+        //     "typescript",
+        //     'decorators-legacy',
+        //     "classProperties",
         // ]
     })
     // console.log('result :>> ', result);
@@ -55,7 +82,8 @@ exports.getI18n = function(scriptContent, key) {
     // console.log('result.ast :>> ', result.ast);
     return val
 }
-
+exports.getI18n = getI18n
+// getI18n()
 
 // 手动解析 script 中的 i18n 字段
 

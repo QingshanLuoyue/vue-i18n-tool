@@ -13,10 +13,10 @@ import dayjs from 'dayjs'
 export default {
     // i18n: i18n,
     i18n: {
-        en: {
+        zhCHS: {
             x: 1
         },
-        cn: {
+        zhCHT: {
             x: 2
         }
     },

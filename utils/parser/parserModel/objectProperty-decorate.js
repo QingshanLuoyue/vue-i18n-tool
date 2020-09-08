@@ -1,45 +1,45 @@
-// let babelParse = require('@babel/parser')
-// // 遍历 AST
-// let traverse  = require('@babel/traverse').default
-// // 使用 AST 成功 原始 code
+let babelParse = require('@babel/parser')
+// 遍历 AST
+let traverse  = require('@babel/traverse').default
+// 使用 AST 成功 原始 code
 let generate  = require('@babel/generator').default
-// // babel.transform 转换 原始 code 为 AST
-// let babel = require("@babel/core");
+// babel.transform 转换 原始 code 为 AST
+let babel = require("@babel/core");
 
-// // 处理逻辑
+// 处理逻辑
 
-// // 1、读取原始 code
-// let { objectProperty_commonJson } = require('../template/index.js')
+// 1、读取原始 code
+let { objectProperty_commonJson } = require('../template/index.js')
 
-// // 2、转换原始 code， 得到 AST
-// let result = babel.transform(objectProperty_commonJson, {
-//     ast: true,
-//     // presets: [
-//     //     转换成 ES5
-//     //     require("@babel/preset-env")
-//     // ]
-// })
-// // Object.keys(result): [ 'metadata', 'options', 'ast', 'code', 'map', 'sourceType' ]
+// 2、转换原始 code， 得到 AST
+let result = babel.transform(objectProperty_commonJson, {
+    ast: true,
+    // presets: [
+    //     转换成 ES5
+    //     require("@babel/preset-env")
+    // ]
+})
+// Object.keys(result): [ 'metadata', 'options', 'ast', 'code', 'map', 'sourceType' ]
 
-// // 3、遍历 AST，得到 i18n 对应的对象
-// traverse(result.ast, {
-//     enter(path) {
-//         let node = path.node
-//         if (node.type === 'ObjectProperty' && node.key.name === 'i18n' && node.value.type === 'ObjectExpression') {
-//             let originStringCode = generate(node.value)
-//             console.log('originStringCode :>> ', originStringCode)
+// 3、遍历 AST，得到 i18n 对应的对象
+traverse(result.ast, {
+    enter(path) {
+        let node = path.node
+        if (node.type === 'ObjectProperty' && node.key.name === 'i18n' && node.value.type === 'ObjectExpression') {
+            let originStringCode = generate(node.value)
+            console.log('originStringCode :>> ', originStringCode)
 
-//             let obj = {}
-//             eval(`obj = ${originStringCode.code}`)
-//             console.log('obj :>> ', obj)
-//             // return obj
-//         }
-//     },
-//     // exit(path) {
-//     //     console.log('path :>> ', path)
-//     // }
-// })
-// console.log('result.ast :>> ', result.ast);
+            let obj = {}
+            eval(`obj = ${originStringCode.code}`)
+            console.log('obj :>> ', obj)
+            // return obj
+        }
+    },
+    // exit(path) {
+    //     console.log('path :>> ', path)
+    // }
+})
+console.log('result.ast :>> ', result.ast);
 // node:>>>  Node {
 //     type: 'ObjectProperty',
 //     start: 22,
@@ -96,7 +96,7 @@ module.exports = function(node) {
 
         let obj = {}
         eval(`obj = ${originStringCode.code}`)
-        console.log('obj :>> ', obj)
+        // console.log('obj :>> ', obj)
         return obj
     } else {
         return null

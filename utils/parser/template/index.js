@@ -7,10 +7,10 @@ export default {
 const objectProperty_commonJson  = `
 export default {
     i18n: {
-        zhs: {
+        zhCHS: {
             x: 1
         },
-        zht: {
+        zhCHT: {
             y: 2
         },
         en: {

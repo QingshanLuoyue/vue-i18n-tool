@@ -26,11 +26,14 @@ function provideHover(document, position, token) {
     // /\$t\(\'[^).]+\'\)/ 正则匹配 hover 的字符串范围
     // 如果没有就随便给个位置
     const range = document.getWordRangeAtPosition(position, /\$t\(\'[^)]+\'\)/) || [{ line: 0, character: 0 }]
-    // console.log('范围 range :>> ', range);
+    console.log('范围 range :>> ', range);
+    if (range.length < 2) {
+        return
+    }
 
     // 通过鼠标悬停范围，截取单词
     const word = document.getText(range)
-    // console.log('截取单词 word:>> ', word)
+    console.log('截取单词 word:>> ', word)
 
     if (/\.vue$/.test(fileName)) {
         // console.log('\n进入 provideHover 方法\n')
@@ -42,25 +45,29 @@ function provideHover(document, position, token) {
         // let projectRootDir = getRootDir(workDir, whilteList)
         // console.log('当前项目根目录 projectRootDir:>> ', projectRootDir)
 
+        let i18nKey = word.match(/\$t\('(.+)'\)/)[1]
+        console.log('i18nKey :>> ', i18nKey)
+        if (!i18nKey) {
+            return
+        }
+
         // 读取当前文件内容
         let fileContent = fs.readFileSync(fileName, { encoding: 'utf-8' })
 
         // 获取 script 中的内容
-        let matchResult = fileContent.match(/<script>((.|\n|\t|\r)+)<\/script>/)
+        let matchResult = fileContent.match(/<script[^>]*>((.|\n|\t|\r)+)<\/script>/)
         // console.log('matchResult :>> ', matchResult)
         if (matchResult) {
             let scriptContent = matchResult[1]
             // console.log('scriptContent :>> ', scriptContent)
 
-            let i18nKey = word.match(/\$t\('(.+)'\)/)[1]
-            // console.log('i18nKey :>> ', i18nKey)
 
             let i18nVal = getI18n(scriptContent, i18nKey)
-            // console.log('i18nHover :>> ', i18nVal)
+            console.log('i18nHover :>> ', i18nVal)
 
             return new vscode.Hover(i18nVal)
         }
-        return new vscode.Hover('yx-i18n-helper 找不到匹配')
+        // return new vscode.Hover('yx-i18n-helper 找不到匹配')
     }
 }
 
