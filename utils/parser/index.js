@@ -1,6 +1,6 @@
 // const fs = require('fs')
 // const path = require('path')
-let babelParse = require('@babel/parser')
+// let babelParse = require('@babel/parser')
 // 遍历 AST
 let traverse  = require('@babel/traverse').default
 // 使用 AST 成功 原始 code
@@ -9,17 +9,25 @@ let traverse  = require('@babel/traverse').default
 let babel = require("@babel/core");
 
 
-// 处理逻辑
+// 缓存当前数据，只有重启IDE才会更新数据
+const instance = {}
 
-const getI18n = function(scriptContent, key = '') {
-    let val = '', keys = key.split('.')
+// 处理逻辑
+const getI18n = function(scriptContent, fileName) {
+    // 若存在当前页面多语言对象，则直接返回
+    console.log('before')
+    if (instance[fileName]) {
+        return instance[fileName]
+    }
+    console.log('after')
+
     // 1、读取原始 code
     // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin.js'), { encoding: 'utf8'})
     // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin-decorate.js'), { encoding: 'utf8'})
     // let { objectProperty_commonJson } = require('./template/index.js')
     let objectProperty = require('./parserModel/objectProperty.js')
     // 2、转换原始 code， 得到 AST
-    babelParse
+    // babelParse
     // let result = babelParse.parse(originJs, {
     let result = babel.transform(scriptContent, {
     // let result = babel.transform(originJs, {
@@ -64,10 +72,7 @@ const getI18n = function(scriptContent, key = '') {
             let res = null
             if (res = objectProperty(node)) {
                 // console.log('res :>> ', res)
-                val = res['zhCHS']
-                keys.forEach(key => {
-                    val = val[key]
-                })
+                instance[fileName] = res
             }
         },
         // exit(path) {
@@ -80,7 +85,7 @@ const getI18n = function(scriptContent, key = '') {
         // }
     })
     // console.log('result.ast :>> ', result.ast);
-    return val
+    return instance[fileName]
 }
 exports.getI18n = getI18n
 // getI18n()

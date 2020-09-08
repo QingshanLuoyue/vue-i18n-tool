@@ -62,10 +62,15 @@ function provideHover(document, position, token) {
             // console.log('scriptContent :>> ', scriptContent)
 
 
-            let i18nVal = getI18n(scriptContent, i18nKey)
-            console.log('i18nHover :>> ', i18nVal)
+            let i18nObj = getI18n(scriptContent, fileName)['zhCHS']
+            console.log('i18nObj :>> ', i18nObj)
+            let keys = i18nKey.split('.'), val = ''
+            keys.forEach(key => {
+                val = i18nObj[key]
+            })
+            console.log('i18nVal :>> ', val)
 
-            return new vscode.Hover(i18nVal)
+            return new vscode.Hover(val)
         }
         // return new vscode.Hover('yx-i18n-helper 找不到匹配')
     }
