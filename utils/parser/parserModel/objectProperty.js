@@ -94,7 +94,7 @@ module.exports = function(node) {
         let originStringCode = generate(node.value)
         // console.log('i18n string code :>> ', originStringCode)
 
-        let obj = {}
+        let obj = null
         eval(`obj = ${originStringCode.code}`)
         console.log('obj :>> ', obj)
         return obj

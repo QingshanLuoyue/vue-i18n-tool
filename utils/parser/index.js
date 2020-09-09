@@ -8,19 +8,9 @@ let traverse  = require('@babel/traverse').default
 // babel.transform 转换 原始 code 为 AST
 let babel = require("@babel/core");
 
-
-// 缓存当前数据，只有重启IDE才会更新数据
-const instance = {}
-
 // 处理逻辑
 const getI18n = function(scriptContent, fileName) {
-    // 若存在当前页面多语言对象，则直接返回
-    console.log('before')
-    if (instance[fileName]) {
-        return instance[fileName]
-    }
-    console.log('after')
-
+    let i18nObj = null
     // 1、读取原始 code
     // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin.js'), { encoding: 'utf8'})
     // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin-decorate.js'), { encoding: 'utf8'})
@@ -72,7 +62,7 @@ const getI18n = function(scriptContent, fileName) {
             let res = null
             if (res = objectProperty(node)) {
                 // console.log('res :>> ', res)
-                instance[fileName] = res
+                i18nObj = res
             }
         },
         // exit(path) {
@@ -85,7 +75,7 @@ const getI18n = function(scriptContent, fileName) {
         // }
     })
     // console.log('result.ast :>> ', result.ast);
-    return instance[fileName]
+    return i18nObj
 }
 exports.getI18n = getI18n
 // getI18n()
