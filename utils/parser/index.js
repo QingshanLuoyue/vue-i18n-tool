@@ -24,7 +24,8 @@ const getI18n = function(scriptContent, isTs, fileName) {
 
                 if (res = objectProperty(path)) {
                     i18nObj = res
-                    console.log('objectProperty i18nObj :>> ', i18nObj)
+                    // console.log('objectProperty i18nObj :>> ', i18nObj)
+                    return
                 } else if (objectProperty_import.hitEnter(path)) {
                     analysis(scriptContent, [
                         {
@@ -32,7 +33,8 @@ const getI18n = function(scriptContent, isTs, fileName) {
                         }
                     ])
                     i18nObj = objectProperty_import.getI18n(fileName)
-                    console.log('objectProperty_import i18nObj :>> ', i18nObj)
+                    // console.log('objectProperty_import i18nObj :>> ', i18nObj)
+                    return
                 }
             },
         }

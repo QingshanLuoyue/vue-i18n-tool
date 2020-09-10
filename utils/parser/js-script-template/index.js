@@ -73,6 +73,14 @@ export default {
     i19n
 }
 `
+
+const exportDefaultZhCHS  = `
+export default {
+    zhCHS: {
+        x: 1
+    }
+}
+`
 module.exports = {
     objectProperty_setVarValue,
     objectProperty_commonJson,
@@ -82,5 +90,6 @@ module.exports = {
     origin_ts,
     origin_rest,
     exportConstI18n,
-    exportConstI18nRest
+    exportConstI18nRest,
+    exportDefaultZhCHS
 }

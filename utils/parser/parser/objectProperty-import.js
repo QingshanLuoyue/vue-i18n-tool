@@ -22,7 +22,7 @@ const getImportUrl = function(path) {
         for (const specifier of node.specifiers) {
             if (specifier.local.name === importName) {
                 importUrl = node.source.value
-                break
+                return
             }
         }
     }
@@ -31,9 +31,9 @@ const getImportUrl = function(path) {
 const getI18n = function(fileName) {
     let i18nObj = null
     let avalableUrl = path.resolve(path.dirname(fileName), importUrl)
-    console.log('fileName :>> ', fileName)
-    console.log('importUrl :>> ', importUrl)
-    console.log('avalableUrl :>> ', avalableUrl)
+    // console.log('fileName :>> ', fileName)
+    // console.log('importUrl :>> ', importUrl)
+    // console.log('avalableUrl :>> ', avalableUrl)
     let finalUrl = ''
     if (fs.existsSync(avalableUrl)) {
         let x  = fs.statSync(avalableUrl)
@@ -45,7 +45,7 @@ const getI18n = function(fileName) {
     } else {
         finalUrl = `${avalableUrl}.js`
     }
-    console.log('finalUrl :>> ', finalUrl);
+    // console.log('finalUrl :>> ', finalUrl);
     let importContent = fs.readFileSync(finalUrl, { encoding: 'utf8'})
     // console.log('importContent :>> ', importContent)
 
@@ -59,16 +59,36 @@ const getI18n = function(fileName) {
                 let node = path.node
                 if (node.type === 'VariableDeclarator' && node.id.name === importName) {
                     let originStringCode = generate(node)
-                    console.log('importContent importName :>> ', importName)
-                    console.log('importContent string code :>> ', originStringCode)
+                    // console.log('importContent importName :>> ', importName)
+                    // console.log('importContent string code :>> ', originStringCode)
 
                     eval(`i18nObj = ${originStringCode.code}`)
-                    console.log('importContent i18nObj :>> ', i18nObj)
-                } else {
+                    // console.log('importContent i18nObj :>> ', i18nObj)
+                    return
                 }
             }
         }
     ])
+    if (!i18nObj) {
+        analysis(importContent, [
+            {
+                // 预处理调不能处理的语法
+                enter: objectProperty_rest
+            },
+            {
+                enter(path) {
+                    let node = path.node
+                    if (node.type === 'ExportDefaultDeclaration') {
+                        let originStringCode = generate(node.declaration)
+                        // console.log('ExportDefaultDeclaration string code :>> ', originStringCode)
+                        eval(`i18nObj = ${originStringCode.code}`)
+                        // console.log('ExportDefaultDeclaration i18nObj :>> ', i18nObj)
+                        return i18nObj
+                    }
+                }
+            }
+        ])
+    }
     return i18nObj
 }
 

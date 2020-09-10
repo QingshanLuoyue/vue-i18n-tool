@@ -42,7 +42,7 @@ function provideHover(document, position, token) {
 
     // 通过鼠标悬停范围，截取单词
     const word = document.getText(range)
-    console.log('截取单词 word:>> ', word)
+    // console.log('截取单词 word:>> ', word)
 
     if (/\.vue$/.test(fileName)) {
         // console.log('\n进入 provideHover 方法\n')
@@ -55,7 +55,7 @@ function provideHover(document, position, token) {
         // console.log('当前项目根目录 projectRootDir:>> ', projectRootDir)
 
         let i18nKey = word.match(/\$t\('(.+)'\)/)[1]
-        console.log('i18nKey :>> ', i18nKey)
+        // console.log('i18nKey :>> ', i18nKey)
         if (!i18nKey) {
             return
         }
@@ -63,16 +63,16 @@ function provideHover(document, position, token) {
         // 若存在当前页面多语言对象，则直接使用
         let i18nObj = null
         if (instance[fileName]) {
-            console.log('hit i18nObj cache')
+            // console.log('hit i18nObj cache')
             i18nObj = instance[fileName]
         } else {
-            console.log('get i18nObj')
+            // console.log('get i18nObj')
             // 读取当前文件内容
             let fileContent = fs.readFileSync(fileName, { encoding: 'utf-8' })
             // 获取 script 中的内容
             let matchResult = fileContent.match(/<script[^>]*>((.|\n|\t|\r)+)<\/script>/)
             let isTs = fileContent.match(/<script([^>]*)>((.|\n|\t|\r)+)<\/script>/)[1].indexOf('ts') > -1 ? true : false
-            console.log('isTs :>> ', isTs);
+            // console.log('isTs :>> ', isTs);
             // console.log('matchResult :>> ', matchResult)
             if (matchResult) {
                 let scriptContent = matchResult[1]
@@ -81,7 +81,7 @@ function provideHover(document, position, token) {
                 instance[fileName] = i18nObj
             }
         }
-        console.log('Component >> i18nObj :>> ', i18nObj)
+        // console.log('Component >> i18nObj :>> ', i18nObj)
 
         let keys = i18nKey.split('.'), val = i18nObj
         keys.forEach(key => {
@@ -91,22 +91,22 @@ function provideHover(document, position, token) {
                 val = ''
             }
         })
-        console.log('Component >>> i18nVal:>> ', val)
+        // console.log('Component >>> i18nVal:>> ', val)
 
         if (!val) {
             let staticI18nObj = null
             let staticPath = fileName.replace(`${rootPath}`, '').replace(path.normalize('/src/pages/'), '').split(path.normalize('/')).slice(0, 2).join('/')
-            console.log('staticPath :>> ', staticPath)
+            // console.log('staticPath :>> ', staticPath)
 
             if (instance[staticPath]) {
-                console.log('hit static i18n cache')
+                // console.log('hit static i18n cache')
                 staticI18nObj = instance[staticPath]
             } else {
                 staticI18nObj = getStaticI18n(path.resolve(rootPath, `./src/utils/i18n-message/${staticPath}/zh-chs.js`))
                 instance[staticPath] = staticI18nObj
-                console.log('get static i18n')
+                // console.log('get static i18n')
             }
-            console.log('staticI18nObj :>> ', staticI18nObj);
+            // console.log('staticI18nObj :>> ', staticI18nObj);
             val = staticI18nObj
             keys.forEach(key => {
                 if (val[key]) {
@@ -115,7 +115,7 @@ function provideHover(document, position, token) {
                     val = ''
                 }
             })
-            console.log('Static >>> i18nVal:>> ', val)
+            // console.log('Static >>> i18nVal:>> ', val)
         }
 
         return new vscode.Hover(JSON.stringify(val || ''))
