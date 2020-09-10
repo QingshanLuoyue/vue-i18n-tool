@@ -1,3 +1,4 @@
+module.exports = `
 import { Component, Vue } from 'vue-property-decorator'
 import { isYouxinApp, lang, appType } from '@/utils/html-utils'
 import { wechatShare } from '@/utils/share/wechat.js'
@@ -37,10 +38,6 @@ export default class IntroducePage extends Vue {
         wechatShare({
             title: this.$t('shareTitle'),
             desc: this.$t('shareDesc'),
-            link: `${window.location.origin}${window.location.pathname}?langType=${langMap[lang]}&appType=${appTypeNum}${window.location.hash}`,
-            imgUrl: `${
-                window.location.origin
-            }${require('@/assets/img/intraday-financing/icon-logo.png')}`
         })
         if (isYouxinApp) {
             this.$jsBridge.registerFn('share', () => {
@@ -48,12 +45,6 @@ export default class IntroducePage extends Vue {
                     shareType: 'freedom',
                     title: this.$t('shareTitle'),
                     description: this.$t('shareDesc'),
-                    pageUrl: unescape(
-                        `${window.location.origin}${window.location.pathname}?langType=${langMap[lang]}&appType=${appTypeNum}${window.location.hash}`
-                    ),
-                    thumbUrl: `${
-                        window.location.origin
-                    }${require('@/assets/img/intraday-financing/icon-logo.png')}`
                 })
             })
             let iconBase64 = require('@/assets/img/intraday-financing/share-dark.png')
@@ -98,3 +89,4 @@ export default class IntroducePage extends Vue {
         }
     }
 }
+`

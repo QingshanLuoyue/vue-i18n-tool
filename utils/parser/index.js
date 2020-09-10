@@ -1,84 +1,46 @@
 // const fs = require('fs')
 // const path = require('path')
-// let babelParse = require('@babel/parser')
-// 遍历 AST
-let traverse  = require('@babel/traverse').default
-// 使用 AST 成功 原始 code
-// let generate  = require('@babel/generator').default
-// babel.transform 转换 原始 code 为 AST
-let babel = require("@babel/core");
+
+const { analysis } = require('./babel');
+
 
 // 处理逻辑
-const getI18n = function(scriptContent, fileName) {
+const getI18n = function(scriptContent, isTs, fileName) {
     let i18nObj = null
-    // 1、读取原始 code
-    // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin.js'), { encoding: 'utf8'})
-    // let originJs = fs.readFileSync(path.resolve(__dirname, './template/origin-decorate.js'), { encoding: 'utf8'})
-    // let { objectProperty_commonJson } = require('./template/index.js')
-    let objectProperty = require('./parserModel/objectProperty.js')
-    // 2、转换原始 code， 得到 AST
-    // babelParse
-    // let result = babelParse.parse(originJs, {
-    let result = babel.transform(scriptContent, {
-    // let result = babel.transform(originJs, {
-        ast: true,
-        filename: 'file.ts',
-        presets: [
-            // 转换成 ES5
-            require("@babel/preset-env"),
-            require("@babel/preset-typescript"),
-        ],
-        plugins: [
-            [
-                require("@babel/plugin-proposal-decorators"),
-                {
-                    decoratorsBeforeExport: true,
-                    // legacy: true
-                }
-            ],
-            [
-                require("@babel/plugin-proposal-class-properties"),
-                // { loose : true }
-            ],
-        ]
 
-        // babelParse配置
-        // sourceType: "module",
-        // plugins: [
-        //     "typescript",
-        //     'decorators-legacy',
-        //     "classProperties",
-        // ]
-    })
-    // console.log('result :>> ', result);
-    // Object.keys(result): [ 'metadata', 'options', 'ast', 'code', 'map', 'sourceType' ]
+    // 解析方法
+    let { objectProperty, objectProperty_rest, objectProperty_import } = require('./parser/index')
 
 
-    // 3、遍历 AST，得到 i18n 对应的对象
-    traverse(result.ast, {
-        enter(path) {
-            // console.log('enter :>> ', path.node);
-            let node = path.node
-            let res = null
-            if (res = objectProperty(node)) {
-                // console.log('res :>> ', res)
-                i18nObj = res
-            }
+    analysis(scriptContent, [
+        {
+            // 移除，无法处理的语法
+            enter:objectProperty_rest
         },
-        // exit(path) {
-            // let node = path.node
-            // if (node.type === 'CallExpression' && node.arguments && node.arguments[0] && node.arguments[0].type === 'StringLiteral') {
-            //     console.log('node.arguments[0] :>>退出 ', node.arguments[0]);
-            // }
-            // console.log('exit :>>退出 ', path.type);
-            // console.log('exit :>> 退出', path);
-        // }
-    })
-    // console.log('result.ast :>> ', result.ast);
+        {
+            enter(path) {
+                // console.log('enter :>> ', path.node);
+                let res = null
+
+                if (res = objectProperty(path)) {
+                    i18nObj = res
+                    console.log('objectProperty i18nObj :>> ', i18nObj)
+                } else if (objectProperty_import.hitEnter(path)) {
+                    analysis(scriptContent, [
+                        {
+                            enter: objectProperty_import.getImportUrl
+                        }
+                    ])
+                    i18nObj = objectProperty_import.getI18n(fileName)
+                    console.log('objectProperty_import i18nObj :>> ', i18nObj)
+                }
+            },
+        }
+    ], isTs)
     return i18nObj
 }
 exports.getI18n = getI18n
-// getI18n()
+// getI18n('', false)
 
 // 手动解析 script 中的 i18n 字段
 

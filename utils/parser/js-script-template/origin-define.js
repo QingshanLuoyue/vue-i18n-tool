@@ -1,7 +1,8 @@
+module.exports = `
 import { Icon, Button, Popup, Picker, Dialog } from 'vant'
 import uploadCertification from '@/pages/open-account-hk/apply/biz-components/upload-certification/index.vue'
 import { personalMixins } from './mixins/personal'
-import { NFC_OPENACCOUNT_COUNTRY_CODE } from './map.js'
+import { NFC_OPENACCOUNT_COUNTRY_CODE } from './map.js.js'
 import yxDateTimePicker from '@/biz-components/yx-datetime-picker'
 import { i18n } from './mixins/i18n'
 import { formatDateToEn } from '@/utils/tools'
@@ -11,15 +12,7 @@ import dayjs from 'dayjs'
 //     getHKIdentifyInfo
 // } from '@/service/user-account-server-hk.js'
 export default {
-    // i18n: i18n,
-    i18n: {
-        zhCHS: {
-            x: 1
-        },
-        zhCHT: {
-            x: 2
-        }
-    },
+    i18n: i18n,
     mixins: [personalMixins],
     components: {
         [Icon.name]: Icon,
@@ -41,7 +34,6 @@ export default {
         return {
             stringData: JSON.parse(JSON.stringify(this.componentShareData)),
             weixinContent1: this.$t('regulatoryRequirements'),
-            weinxinContent2: `${this.$t('notSupportOpenAccount')}`,
             // 证件类型
             identifyType: '',
             // identifyInfo: {},
@@ -74,7 +66,6 @@ export default {
             title: {
                 placeOfIssue: this.$t('pleaseSelectplace')
             },
-            exampleImage: `${window.location.origin}/webapp/open-account-hk/apply/example.png`
         }
     },
     computed: {
@@ -330,3 +321,4 @@ export default {
         }
     }
 }
+`

@@ -71,11 +71,13 @@ function provideHover(document, position, token) {
             let fileContent = fs.readFileSync(fileName, { encoding: 'utf-8' })
             // 获取 script 中的内容
             let matchResult = fileContent.match(/<script[^>]*>((.|\n|\t|\r)+)<\/script>/)
+            let isTs = fileContent.match(/<script([^>]*)>((.|\n|\t|\r)+)<\/script>/)[1].indexOf('ts') > -1 ? true : false
+            console.log('isTs :>> ', isTs);
             // console.log('matchResult :>> ', matchResult)
             if (matchResult) {
                 let scriptContent = matchResult[1]
                 // console.log('scriptContent :>> ', scriptContent)
-                i18nObj = getI18n(scriptContent, fileName)['zhCHS']
+                i18nObj = getI18n(scriptContent, isTs, fileName)['zhCHS']
                 instance[fileName] = i18nObj
             }
         }
@@ -116,7 +118,7 @@ function provideHover(document, position, token) {
             console.log('Static >>> i18nVal:>> ', val)
         }
 
-        return new vscode.Hover(val)
+        return new vscode.Hover(JSON.stringify(val || ''))
     }
 }
 

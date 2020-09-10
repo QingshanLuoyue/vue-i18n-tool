@@ -1,11 +1,11 @@
-import { Icon, Button, Popup, Picker, Dialog } from 'vant'
-import uploadCertification from '@/pages/open-account-hk/apply/biz-components/upload-certification/index.vue'
+import { Icon, Button, Popup, Picker, Dialog } from '../utils/parser/js-script-template/node_modules/vant'
+import uploadCertification from '../utils/parser/js-script-template/node_modules/@/pages/open-account-hk/apply/biz-components/upload-certification/index.vue'
 import { personalMixins } from './mixins/personal'
 import { NFC_OPENACCOUNT_COUNTRY_CODE } from './map.js'
-import yxDateTimePicker from '@/biz-components/yx-datetime-picker'
+import yxDateTimePicker from '../utils/parser/js-script-template/node_modules/@/biz-components/yx-datetime-picker'
 import { i18n } from './mixins/i18n'
-import { formatDateToEn } from '@/utils/tools'
-import dayjs from 'dayjs'
+import { formatDateToEn } from '../utils/parser/js-script-template/node_modules/@/utils/tools'
+import dayjs from '../utils/parser/js-script-template/node_modules/dayjs'
 // import {
 //     // 获取客户个人资料信息
 //     getHKIdentifyInfo
