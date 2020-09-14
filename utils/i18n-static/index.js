@@ -1,7 +1,7 @@
 const babel = require('@babel/core')
 
-const staticI18n = function(dir) {
-    let content = babel.transformFileSync(dir, {
+const staticI18n = function(filepath) {
+    let content = babel.transformFileSync(filepath, {
         presets: [
             require('@babel/preset-env')
         ]

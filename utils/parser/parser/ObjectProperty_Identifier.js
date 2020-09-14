@@ -3,7 +3,7 @@ const path = require('path')
 const { generate, analysis } = require('../babel');
 
 // let { objectProperty_import } = require('../js-script-template/index.js')
-let objectProperty_rest = require('./objectProperty-rest.js')
+let removeUnableToParseSyntax = require('./remove-unable-to-parse-syntax.js')
 
 let importName = ''
 let importUrl = ''
@@ -52,7 +52,7 @@ const getI18n = function(fileName) {
     analysis(importContent, [
         {
             // 预处理调不能处理的语法
-            enter: objectProperty_rest
+            enter: removeUnableToParseSyntax
         },
         {
             enter(path) {
@@ -73,7 +73,7 @@ const getI18n = function(fileName) {
         analysis(importContent, [
             {
                 // 预处理调不能处理的语法
-                enter: objectProperty_rest
+                enter: removeUnableToParseSyntax
             },
             {
                 enter(path) {

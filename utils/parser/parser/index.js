@@ -1,9 +1,9 @@
-const objectProperty = require('./objectProperty.js')
-const objectProperty_rest = require('./objectProperty-rest.js')
-const objectProperty_import = require('./objectProperty-import.js')
+const ObjectProperty_ObjectExpression = require('./ObjectProperty_ObjectExpression.js')
+const removeUnableToParseSyntax = require('./remove-unable-to-parse-syntax.js')
+const ObjectProperty_Identifier = require('./ObjectProperty_Identifier.js')
 
 module.exports = {
-    objectProperty,
-    objectProperty_rest,
-    objectProperty_import
+    ObjectProperty_ObjectExpression,
+    removeUnableToParseSyntax,
+    ObjectProperty_Identifier
 }

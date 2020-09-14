@@ -1,14 +1,37 @@
-const origin_define = require('./origin-define.js')
-const origin_ts = require('./origin-ts.js')
-const origin_rest = require('./origin-rest.js')
-
-const objectProperty_setVarValue  = `
-export default {
-    i18n: i18n
+const ts_template = `
+@Component({
+    i18n: {
+        zhCHS: {
+            shareTitle: '友信证券日内融，炒股新玩法',
+            shareDesc: '最高支持20倍杠杆，0利息，一键下单。小资本，撬动大收益！'
+        },
+        zhCHT: {
+            shareTitle: '友信證券即日孖展，炒股新玩法',
+            shareDesc: '最高支持20倍槓桿，0利息，一鍵下單。小資本，撬動大收益！'
+        },
+        en: {
+            shareTitle: 'uSMART New Concept: Day Margin',
+            shareDesc:
+                'Up to 20x Margin, 0 interest. Having large profit by small capitals!'
+        }
+    }
+})
+export default class IntroducePage extends Vue {
+    private showPage = false
 }
 `
 
-const objectProperty_commonJson  = `
+
+const ObjectProperty_Identifier_template = `
+import { importi18n, i18n } from './mixins/i18n'
+export default {
+    i18n: i18n,
+    i18n,
+    i19n: importi18n,
+}
+`
+
+const ObjectProperty_ObjectExpression_template  = `
 export default {
     i18n: {
         zhCHS: {
@@ -24,7 +47,7 @@ export default {
 }
 `
 
-const objectProperty_rest  = `
+const ObjectProperty_ObjectExpression__unable_to_parse_syntax  = `
 export default {
     i18n: {
         zhCHS: {
@@ -44,13 +67,7 @@ export default {
     }
 }
 `
-const objectProperty_import  = `
-import {importi18n, i19n} from './page/index.js'
-export default {
-    i18n: importi18n,
-    i19n
-}
-`
+
 const exportConstI18n  = `
 export const i18n = {
     x:  1
@@ -61,7 +78,7 @@ export default {
 }
 `
 
-const exportConstI18nRest  = `
+const exportConstI18n__unable_to_parse_syntax  = `
 export const i18n = {
     zh: {
         x: 1,
@@ -82,14 +99,11 @@ export default {
 }
 `
 module.exports = {
-    objectProperty_setVarValue,
-    objectProperty_commonJson,
-    objectProperty_rest,
-    objectProperty_import,
-    origin_define,
-    origin_ts,
-    origin_rest,
+    ObjectProperty_Identifier_template,
+    ObjectProperty_ObjectExpression_template,
+    ObjectProperty_ObjectExpression__unable_to_parse_syntax,
+    exportConstI18n__unable_to_parse_syntax,
+    ts_template,
     exportConstI18n,
-    exportConstI18nRest,
     exportDefaultZhCHS
 }

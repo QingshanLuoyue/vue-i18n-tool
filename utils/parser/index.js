@@ -9,31 +9,31 @@ const getI18n = function(scriptContent, isTs, fileName) {
     let i18nObj = null
 
     // 解析方法
-    let { objectProperty, objectProperty_rest, objectProperty_import } = require('./parser/index')
+    let { ObjectProperty_ObjectExpression, removeUnableToParseSyntax, ObjectProperty_Identifier } = require('./parser/index')
 
 
     analysis(scriptContent, [
         {
             // 移除，无法处理的语法
-            enter:objectProperty_rest
+            enter: removeUnableToParseSyntax
         },
         {
             enter(path) {
                 // console.log('enter :>> ', path.node);
                 let res = null
 
-                if (res = objectProperty(path)) {
+                if (res = ObjectProperty_ObjectExpression(path)) {
                     i18nObj = res
-                    // console.log('objectProperty i18nObj :>> ', i18nObj)
+                    // console.log('ObjectProperty_ObjectExpression i18nObj :>> ', i18nObj)
                     return
-                } else if (objectProperty_import.hitEnter(path)) {
+                } else if (ObjectProperty_Identifier.hitEnter(path)) {
                     analysis(scriptContent, [
                         {
-                            enter: objectProperty_import.getImportUrl
+                            enter: ObjectProperty_Identifier.getImportUrl
                         }
                     ])
-                    i18nObj = objectProperty_import.getI18n(fileName)
-                    // console.log('objectProperty_import i18nObj :>> ', i18nObj)
+                    i18nObj = ObjectProperty_Identifier.getI18n(fileName)
+                    // console.log('ObjectProperty_Identifier i18nObj :>> ', i18nObj)
                     return
                 }
             },

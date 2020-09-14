@@ -1,22 +1,35 @@
 # yx-i18n-helper README
 
-## Features
+配套 yx-i18n 使用
 
-Support yx-i18n
+支持语法
+```javascript
+import i18n from 'xxx.js'
+import { i18n } from 'xxx.js'
+export default {
+    i18n: i18n,
+    i18n,
+    i18n: {
+        zhCHS: {
+            hello: 'hello'
+        }
+    }
+}
+```
 
-## Requirements
+其他如：扩展符、函数等语法不支持，将会解析失败
 
+## usage
 
-## Extension Settings
+安装之后，自动全局生效
 
+将鼠标 hover 在多语言上，即会显示该多语言的中文文案
 
-## Known Issues
+多语言书写格式如下，hover 在 hello 文案上，将会显示 hello 对应的中文文案
+```javascript
+this.$t('hello')
+```
 
+默认会获取当前组件的 i18n 对象去匹配多语言
 
-## Release Notes
-
-Support yx-i18n
-
-### 1.0.0
-
-Initial release
+若匹配不到，将会去当前项目对应的 `utils/i18n-message/项目目录/页面/` 下，尝试寻找匹配

@@ -209,23 +209,6 @@ const path = require('path')
 //     return i18nObject
 // }
 
-// 计算项目根目录，最大向上查询 15 层级
-exports.getRootDir = function (fileDir, whilteList = []) {
-    let projectRootDir = fileDir
-    let flag = false
-    for (let i = 0; i < 15; i++) {
-        whilteList.forEach((projectName) => {
-            if (projectRootDir.split('\\').pop() === projectName) {
-                flag = true
-            }
-        })
-        if (flag) {
-            break
-        }
-        projectRootDir = path.dirname(projectRootDir)
-    }
-    return projectRootDir
-}
 let handles = {
     'export': stringToObj,
     'exportDefault': stringToDefaultObj,
