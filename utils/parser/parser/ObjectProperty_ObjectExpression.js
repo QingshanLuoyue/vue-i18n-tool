@@ -1,10 +1,12 @@
-// const { objectProperty_commonJson, exportDefaultZhCHS } = require('../js-script-template/index.js')
+// const { ObjectProperty_Identifier_template } = require('../js-script-template/index.js')
 const {
-    // analysis,
+    analysis,
     generate
 } = require('../babel.js')
 
-const enter = function(path, keyName = 'i18n') {
+const removeUnableToParseSyntax = require('./remove-unable-to-parse-syntax.js')
+
+const enter = function(path, parentAst, keyName = 'i18n') {
     let node = path.node
     // console.log('node :>> ', node);
     // if (node.type === 'ExportDefaultDeclaration') {
@@ -13,7 +15,15 @@ const enter = function(path, keyName = 'i18n') {
     // }
     if (node.type === 'ObjectProperty' && node.key.name === keyName && node.value.type === 'ObjectExpression') {
         let originStringCode = generate(node.value)
-        // console.log('i18n string code :>> ', originStringCode)
+        console.log('i18n string code :>> ', originStringCode)
+
+        let { ast } = analysis(originStringCode, [{
+            enter: removeUnableToParseSyntax()
+        }])
+
+        let next = generate(ast)
+        console.log('i18n next code :>> ', next)
+
 
         let obj = null
         eval(`obj = ${originStringCode.code}`)
@@ -25,7 +35,7 @@ const enter = function(path, keyName = 'i18n') {
 }
 
 // // 测试
-// analysis(exportDefaultZhCHS, [
+// analysis(ObjectProperty_Identifier_template, [
 //     {
 //         enter
 //     }

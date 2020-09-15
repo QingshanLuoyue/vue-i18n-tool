@@ -23,11 +23,11 @@ export default class IntroducePage extends Vue {
 
 
 const ObjectProperty_Identifier_template = `
-import { importi18n, i18n } from './mixins/i18n'
+// import { importi18n, i18n } from './mixins/i18n'
 export default {
-    i18n: i18n,
+    // i18n: i18n,
     i18n,
-    i19n: importi18n,
+    // i19n: importi18n,
 }
 `
 

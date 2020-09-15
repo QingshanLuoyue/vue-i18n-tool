@@ -1,7 +1,7 @@
 // const fs = require('fs')
 // const path = require('path')
 
-const { analysis } = require('./babel');
+const { analysis, traverse } = require('./babel');
 
 
 // 处理逻辑
@@ -15,14 +15,20 @@ const getI18n = function(scriptContent, isTs, fileName) {
     analysis(scriptContent, [
         {
             // 移除，无法处理的语法
-            enter: removeUnableToParseSyntax
+            enter: removeUnableToParseSyntax([
+                'SpreadElement',
+                'ObjectProperty_valueFunctionExpression',
+                'ObjectMethod'
+            ])
         },
         {
-            enter(path) {
+            enter(path, state, ast) {
                 // console.log('enter :>> ', path.node);
                 let res = null
 
-                if (res = ObjectProperty_ObjectExpression(path)) {
+                if (res = ObjectProperty_ObjectExpression(path, ast)) {
+                    // 去除无法识别语法
+
                     i18nObj = res
                     // console.log('ObjectProperty_ObjectExpression i18nObj :>> ', i18nObj)
                     return
