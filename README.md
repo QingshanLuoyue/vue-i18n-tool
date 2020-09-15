@@ -27,7 +27,10 @@ export default {
 
 多语言书写格式如下，hover 在 hello 文案上，将会显示 hello 对应的中文文案
 ```javascript
-this.$t('hello')
+// 只要是 $t('xxxx') 形式就会进行 i18n 的 key 的匹配获取
+// 匹配代码如下： 
+// let i18nKey = word.match(/\$t\('(.+)'\)/)[1]
+$t('hello')
 ```
 
 默认会获取当前组件的 i18n 对象去匹配多语言

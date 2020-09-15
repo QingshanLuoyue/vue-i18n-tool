@@ -44,10 +44,10 @@ function analysis(jsContent, traverseHandlers = [], isTs) {
     traverseHandlers.forEach(traverseHandler => {
         traverse(result.ast, {
             enter(path, state) {
-                traverseHandler.enter && traverseHandler.enter(path, state, result.ast)
+                traverseHandler.enter && traverseHandler.enter(path, state)
             },
             exit(path, state) {
-                traverseHandler.exit && traverseHandler.exit(path, state, result.ast)
+                traverseHandler.exit && traverseHandler.exit(path, state)
             }
         })
     })

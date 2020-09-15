@@ -1,7 +1,7 @@
 // const fs = require('fs')
 // const path = require('path')
 
-const { analysis, traverse } = require('./babel');
+const { analysis } = require('./babel');
 
 
 // 处理逻辑
@@ -22,11 +22,11 @@ const getI18n = function(scriptContent, isTs, fileName) {
             ])
         },
         {
-            enter(path, state, ast) {
+            enter(path) {
                 // console.log('enter :>> ', path.node);
                 let res = null
 
-                if (res = ObjectProperty_ObjectExpression(path, ast)) {
+                if (res = ObjectProperty_ObjectExpression(path)) {
                     // 去除无法识别语法
 
                     i18nObj = res

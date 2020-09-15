@@ -3,28 +3,28 @@
 
 const filterSyntaxHandlers = {
     ObjectProperty__keyIdentifier__valueIdentifier: function(path) {
-        if (path.node.type === 'ObjectProperty' && path.node.key.type === 'Identifier' && path.node.value.type === 'Identifier') {
+        if (path.node && path.node.type === 'ObjectProperty' && path.node.key.type === 'Identifier' && path.node.value.type === 'Identifier') {
             // 移除 对象方法
             // i18n: i18n
             path.remove()
         }
     },
     SpreadElement: function(path) {
-        if (path.node.type === 'SpreadElement') {
+        if (path.node && path.node.type === 'SpreadElement') {
             // 移除扩展符
             // ...rest
             path.remove()
         }
     },
     ObjectProperty_valueFunctionExpression: function(path) {
-        if (path.node.type === 'ObjectProperty' && path.node.value.type === 'FunctionExpression') {
+        if (path.node && path.node.type === 'ObjectProperty' && path.node.value.type === 'FunctionExpression') {
             // 移除函数
             // fun: function() {}
             path.remove()
         }
     },
     ObjectMethod: function(path) {
-        if (path.node.type === 'ObjectMethod') {
+        if (path.node && path.node.type === 'ObjectMethod') {
             // 移除 对象方法
             // fun() {}
             path.remove()
