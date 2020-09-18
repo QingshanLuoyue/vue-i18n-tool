@@ -66,20 +66,22 @@ function provideHover(document, position, token) {
             if (matchResult) {
                 let scriptContent = matchResult[1]
                 // console.log('scriptContent :>> ', scriptContent)
-                i18nObj = getI18n(scriptContent, isTs, fileName)['zhCHS']
+                let i18nObj = getI18n(scriptContent, isTs, fileName)
+                i18nObj = i18nObj ? i18nObj['zhCHS'] : i18nObj
                 instance[fileName] = i18nObj
             }
         }
         // console.log('Component >> i18nObj :>> ', i18nObj)
-
         let keys = i18nKey.split('.'), val = i18nObj
-        keys.forEach(key => {
-            if (val[key]) {
-                val = val[key]
-            } else {
-                val = ''
-            }
-        })
+        if (val) {
+            keys.forEach(key => {
+                if (val[key]) {
+                    val = val[key]
+                } else {
+                    val = ''
+                }
+            })
+        }
         // console.log('Component >>> i18nVal:>> ', val)
 
         // 当前组件匹配不到多语言，则去静态目录匹配
@@ -108,7 +110,7 @@ function provideHover(document, position, token) {
             // console.log('Static >>> i18nVal:>> ', val)
         }
 
-        return new vscode.Hover(JSON.stringify(val || ''))
+        return new vscode.Hover(JSON.stringify(val || '没有匹配或者是无法处理语法已被过滤'))
     }
 }
 
