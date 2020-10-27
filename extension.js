@@ -14,6 +14,7 @@ function activate(context) {
     console.log('Congratulations, your extension "yx-i18n-helper" is now active!')
 
     require('./src/hover/hover')(context) // 悬停提示
+    // require('./src/location/location')(context, 'xxx', 'yyy') // 跳转
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand

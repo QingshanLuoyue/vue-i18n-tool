@@ -26,7 +26,7 @@ const getI18n = function(scriptContent, isTs, fileName) {
                 // console.log('enter :>> ', path.node);
                 let res = null
 
-                if (res = ObjectProperty_ObjectExpression(path)) {
+                if (res = ObjectProperty_ObjectExpression(path, fileName)) {
                     // 去除无法识别语法
 
                     i18nObj = res

@@ -19,6 +19,9 @@ const staticI18n = function(filepath) {
     let i18nObj = null
     eval(`${content.code}\n i18nObj = zhCHS`)
 
+    if (i18nObj) {
+        i18nObj.__filepath = filepath
+    }
     // console.log('chs :>> ', i18nObj);
     return i18nObj
 }

@@ -57,6 +57,7 @@ const getI18n = function(fileName) {
         {
             enter(path) {
                 let node = path.node
+                // const i18n = {} 形式
                 if (node.type === 'VariableDeclarator' && node.id.name === importName) {
                     let originStringCode = generate(node)
                     // console.log('importContent importName :>> ', importName)
@@ -64,12 +65,18 @@ const getI18n = function(fileName) {
 
                     eval(`i18nObj = ${originStringCode.code}`)
                     // console.log('importContent i18nObj :>> ', i18nObj)
+                    i18nObj.__filepath = finalUrl
                     return
                 }
             }
         }
     ])
     if (!i18nObj) {
+        // 若不是  const i18n = {} 形式
+        // 而是
+        // export default  {
+        //     zhCHS: {}
+        // }
         analysis(importContent, [
             {
                 // 预处理调不能处理的语法
@@ -83,6 +90,8 @@ const getI18n = function(fileName) {
                         // console.log('ExportDefaultDeclaration string code :>> ', originStringCode)
                         eval(`i18nObj = ${originStringCode.code}`)
                         // console.log('ExportDefaultDeclaration i18nObj :>> ', i18nObj)
+                        i18nObj.__filepath = finalUrl
+
                         return i18nObj
                     }
                 }

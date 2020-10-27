@@ -6,7 +6,7 @@ const {
 
 const removeUnableToParseSyntax = require('./remove-unable-to-parse-syntax.js')
 
-const enter = function(path, keyName = 'i18n') {
+const enter = function(path, fileName, keyName = 'i18n') {
     let node = path.node
     // console.log('node :>> ', node);
     // if (node.type === 'ExportDefaultDeclaration') {
@@ -29,6 +29,10 @@ const enter = function(path, keyName = 'i18n') {
 
         let obj = null
         eval(`${next.code}\n obj = i18n`)
+
+        if (obj) {
+            obj.__filepath = fileName
+        }
         // console.log('obj :>> ', obj)
         return obj
     } else {
