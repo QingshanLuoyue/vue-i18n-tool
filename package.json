@@ -5,7 +5,8 @@
 	"version": "0.0.6",
 	"engines": {
 		"vscode": "^1.46.0"
-	},
+    },
+    "repository": "https://github.com/QingshanLuoyue/vue-i18n-tool.git",
 	"publisher": "linjunfu",
 	"categories": [
 		"Other"
