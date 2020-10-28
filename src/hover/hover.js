@@ -50,11 +50,11 @@ function provideHover(document, position, token) {
         }
 
         let i18nObj = null
-        if (instance[fileName]) {
-            // 若当前页面存在多语言对象，则直接使用
-            // console.log('hit i18nObj cache')
-            i18nObj = instance[fileName]
-        } else {
+        // if (instance[fileName]) {
+        //     // 若当前页面存在多语言对象，则直接使用
+        //     // console.log('hit i18nObj cache')
+        //     i18nObj = instance[fileName]
+        // } else {
             // console.log('get i18nObj')
             // 读取当前文件内容
             let fileContent = fs.readFileSync(fileName, { encoding: 'utf-8' })
@@ -67,7 +67,7 @@ function provideHover(document, position, token) {
             if (matchResult) {
                 let scriptContent = matchResult[1]
                 // console.log('scriptContent :>> ', scriptContent)
-                let i18nObj = getI18n(scriptContent, isTs, fileName)
+                i18nObj = getI18n(scriptContent, isTs, fileName)
                 if (i18nObj) {
                     i18nObj.zhCHS.__filepath = i18nObj.__filepath
                 }
@@ -75,7 +75,7 @@ function provideHover(document, position, token) {
                 i18nObj = i18nObj ? i18nObj['zhCHS'] : i18nObj
                 instance[fileName] = i18nObj
             }
-        }
+        // }
         // console.log('Component >> i18nObj :>> ', i18nObj)
         let keys = i18nKey.split('.'), val = i18nObj
         if (val) {
@@ -95,14 +95,14 @@ function provideHover(document, position, token) {
             let staticPath = fileName.replace(`${rootPath}`, '').replace(path.normalize('/src/pages/'), '').split(path.normalize('/')).slice(0, 2).join('/')
             // console.log('staticPath :>> ', staticPath)
 
-            if (instance[staticPath]) {
-                // console.log('hit static i18n cache')
-                staticI18nObj = instance[staticPath]
-            } else {
+            // if (instance[staticPath]) {
+            //     // console.log('hit static i18n cache')
+            //     staticI18nObj = instance[staticPath]
+            // } else {
                 staticI18nObj = getStaticI18n(path.resolve(rootPath, `./src/utils/i18n-message/${staticPath}/zh-chs.js`))
                 instance[staticPath] = staticI18nObj
                 // console.log('get static i18n')
-            }
+            // }
             // console.log('staticI18nObj :>> ', staticI18nObj);
             val = staticI18nObj
             keys.forEach(key => {
@@ -115,7 +115,7 @@ function provideHover(document, position, token) {
             // console.log('Static >>> i18nVal:>> ', val)
         }
 
-        return new vscode.Hover(JSON.stringify(val || '没有匹配或者是无法处理语法已被过滤'))
+        return new vscode.Hover(val ? JSON.stringify(val) : `* 没有匹配 \n* 或者是 \n* 无法处理的语法已被过滤`)
     }
 }
 
