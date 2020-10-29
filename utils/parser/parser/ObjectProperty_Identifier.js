@@ -37,7 +37,7 @@ const getI18n = function(fileName) {
     let finalUrl = ''
     if (fs.existsSync(avalableUrl)) {
         let x  = fs.statSync(avalableUrl)
-        if (x.isDirectory) {
+        if (x.isDirectory()) {
             finalUrl = `${avalableUrl}${path.normalize('/index.js')}`
         } else {
             finalUrl = avalableUrl
