@@ -13,8 +13,8 @@ function activate(context) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "yx-i18n-helper" is now active!')
 
-    require('./src/hover/hover')(context) // 悬停提示
-    // require('./src/location/location')(context, 'xxx', 'yyy') // 跳转
+    require('./src/hover/hover.js')(context) // 悬停提示
+    require('./src/menu/page-image.js')(context) // 展示页面图片
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
