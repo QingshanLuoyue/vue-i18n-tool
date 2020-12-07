@@ -2,7 +2,7 @@
 	"name": "yx-i18n-helper",
 	"displayName": "yx-i18n-helper",
 	"description": "yx-i18n-helper",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"engines": {
 		"vscode": "^1.46.0"
     },
