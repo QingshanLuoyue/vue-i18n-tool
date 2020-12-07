@@ -15,11 +15,11 @@ function getWebviewContent({completeImgList, vueLib} = {completeImgList: [], vue
     }
     #img-box img {
         display: block;
-        flex: 1;
         width: 30%;
         margin: 5px;
         border: 1px solid #d0d0c5;
         object-fit: contain;
+        flex-basis: 30%;
     }
     #preview {
         overflow: auto;
