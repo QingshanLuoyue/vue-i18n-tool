@@ -3,7 +3,6 @@ const path = require('path')
 const fs = require('fs');
 
 function getWebviewContent({completeImgList, vueLib} = {completeImgList: [], vueLib: ''}) {
-    console.log('completeImgList :>> ', completeImgList);
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,7 +112,7 @@ module.exports = function (context) {
 
         // d:\webproject\account\pageImage
         let pageImageUrl = `${rootPath}${sep}example-image`
-        console.log('pageImageUrl :>> ', pageImageUrl);
+        // console.log('pageImageUrl :>> ', pageImageUrl);
 
         // d:\webproject
         let replaceUrl = rootPath.split(sep).slice(0, -1).join(sep)
@@ -140,10 +139,8 @@ module.exports = function (context) {
                 completeImgList,
                 vueLib: getWebviewUri(panel, null, {context, dir: 'lib', libName: 'vue.min.js'})
             }
-            console.log('o :>> ', o);
-            let ttt = getWebviewContent(o)
-            console.log('ttt :>> ', ttt);
-            panel.webview.html = ttt
+            let con = getWebviewContent(o)
+            panel.webview.html = con
         }
     })
 
