@@ -43,8 +43,8 @@ module.exports = function (context) {
         let sep = path.normalize('/')
 
         // d:\webproject\account\pageImage
-        let pageImageUrl = `${rootPath}${sep}pageImage`
-        // console.log('pageImageUrl :>> ', pageImageUrl);
+        let pageImageUrl = `${rootPath}${sep}example-image`
+        console.log('pageImageUrl :>> ', pageImageUrl);
 
         // d:\webproject
         let replaceUrl = rootPath.split(sep).slice(0, -1).join(sep)
